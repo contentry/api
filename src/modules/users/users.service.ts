@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import {
     Injectable,
     InternalServerErrorException,
-    BadRequestException, HttpException
+    BadRequestException
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
