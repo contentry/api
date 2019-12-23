@@ -21,6 +21,24 @@ export class CreateUserDTO {
     readonly password: string;
 }
 
+@InputType()
+export class UpdateUserDTO {
+    @Field(type => ID)
+    readonly id: number;
+
+    @Field(type => String, { nullable: true })
+    @Length(1, 100)
+    readonly firstName?: string;
+
+    @Field(type => String, { nullable: true })
+    @Length(1, 100)
+    readonly surname?: string;
+
+    @Field(type => String, { nullable: true })
+    @IsEmail()
+    readonly email?: string;
+}
+
 @ObjectType()
 export class UserRO {
     @Field(type => ID)

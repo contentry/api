@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import {
     Injectable,
     InternalServerErrorException,
-    BadRequestException
+    BadRequestException, HttpException
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,7 +10,7 @@ import { RolesService } from '@modules/roles/roles.service';
 import { constants } from '@utils/helpers/roles.helper';
 import { PasswordsHelper } from '@utils/helpers/passwords.helper';
 import { User } from './entities';
-import { User as UserInterface } from './interfaces/user.interface';
+import { User as UserInterface, UpdateUser as UpdateUserInterface } from './interfaces/user.interface';
 import { UserRO } from './users.dto';
 
 @Injectable()
@@ -69,6 +69,45 @@ export class UsersService {
             }
 
             return user;
+        } catch (error) {
+            throw new InternalServerErrorException(error.message);
+        }
+    }
+
+    // TODO: update roles too?
+    // TODO: how to handle bad requests?
+    async updateUser(user: UpdateUserInterface): Promise<UserRO> {
+        try {
+            const existingUser = await this.usersRepository.findOne({
+                where: { id: user.id },
+                relations: ['roles']
+            });
+
+            if (!existingUser) {
+                throw new BadRequestException('User not found');
+            }
+
+            Object.assign(existingUser, user);
+            await this.usersRepository.save(existingUser);
+            return _.omit(existingUser, ['password']);
+        } catch (error) {
+            throw new InternalServerErrorException(error.message);
+        }
+    }
+
+    async deleteUser(userId: number): Promise<UserRO> {
+        try {
+            const existingUser = await this.usersRepository.findOne({
+                where: { id: userId },
+                relations: ['roles']
+            });
+
+            if (!existingUser) {
+                throw new BadRequestException('User doesn\'t exist');
+            }
+
+            const removedUser = await this.usersRepository.remove(existingUser);
+            return _.omit(removedUser, ['password']);
         } catch (error) {
             throw new InternalServerErrorException(error.message);
         }

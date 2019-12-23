@@ -5,9 +5,9 @@ import { RolesGuard } from '@modules/roles/guards/roles.guard';
 import { Roles } from '@modules/roles/roles.decorator';
 import { constants as rolesConstants } from '@utils/helpers/roles.helper';
 import { UsersService } from './users.service';
-import { CreateUserDTO, UserRO } from './users.dto';
+import { CreateUserDTO, UpdateUserDTO, UserRO } from './users.dto';
 import { User as CurrentUser } from './users.decorator';
-import { User } from './interfaces/user.interface';
+import { User, UpdateUser as UpdateUserInterface } from './interfaces/user.interface';
 
 @Resolver(of => UserRO)
 export class UsersResolver {
@@ -42,5 +42,20 @@ export class UsersResolver {
         }
 
         throw new BadRequestException('User not found.');
+    }
+
+    @UseGuards(GqlAuthGuard, RolesGuard)
+    @Roles(rolesConstants.ADMIN)
+    @Mutation(returns => UserRO)
+    updateUser(@Args('updateUserData') payload: UpdateUserDTO): Promise<UserRO> {
+        const user: UpdateUserInterface = { ...payload };
+        return this.usersService.updateUser(user);
+    }
+
+    @UseGuards(GqlAuthGuard, RolesGuard)
+    @Roles(rolesConstants.ADMIN)
+    @Mutation(returns => UserRO)
+    deleteUser(@Args('id') userId: number): Promise<UserRO> {
+        return this.usersService.deleteUser(userId);
     }
 }
