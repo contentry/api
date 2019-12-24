@@ -54,8 +54,8 @@ export class UsersResolver {
 
     @UseGuards(GqlAuthGuard, RolesGuard)
     @Roles(rolesConstants.ADMIN)
-    @Mutation(returns => UserRO)
-    deleteUser(@Args('id') userId: number): Promise<UserRO> {
+    @Mutation(returns => Boolean)
+    deleteUser(@Args('id') userId: number): Promise<boolean> {
         return this.usersService.deleteUser(userId);
     }
 }

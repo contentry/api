@@ -23,7 +23,7 @@ type LoginRO {
 type Mutation {
   createUser(createUserData: CreateUserDTO!): UserRO!
   updateUser(updateUserData: UpdateUserDTO!): UserRO!
-  deleteUser(id: Float!): UserRO!
+  deleteUser(id: Float!): Boolean!
   login(loginData: LoginDTO!): LoginRO!
   logout: Boolean!
 }
