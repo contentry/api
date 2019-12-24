@@ -14,7 +14,7 @@ export class UsersResolver {
     constructor(private readonly usersService: UsersService) {}
 
     @Mutation(returns => UserRO)
-    createUser(@Args('createUserData') payload: CreateUserDTO): Promise<UserRO> {
+    createUser(@Args('data') payload: CreateUserDTO): Promise<UserRO> {
         const user: User = { ...payload };
         return this.usersService.create(user);
     }
@@ -47,9 +47,9 @@ export class UsersResolver {
     @UseGuards(GqlAuthGuard, RolesGuard)
     @Roles(rolesConstants.ADMIN)
     @Mutation(returns => UserRO)
-    updateUser(@Args('updateUserData') payload: UpdateUserDTO): Promise<UserRO> {
-        const user: UpdateUserInterface = { ...payload };
-        return this.usersService.updateUser(user);
+    updateUser(@Args('id') userId: number,
+               @Args('updatedData') data: UpdateUserDTO): Promise<UserRO> {
+        return this.usersService.updateUser(userId, data);
     }
 
     @UseGuards(GqlAuthGuard, RolesGuard)

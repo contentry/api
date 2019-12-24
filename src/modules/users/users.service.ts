@@ -59,10 +59,9 @@ export class UsersService {
     }
 
     // TODO: update roles too?
-    // TODO: how to handle bad requests?
-    async updateUser(user: UpdateUserInterface): Promise<UserRO> {
+    async updateUser(id: number, data: UpdateUserInterface): Promise<UserRO> {
         const existingUser = await this.usersRepository.findOne({
-            where: { id: user.id },
+            where: { id },
             relations: ['roles']
         });
 
@@ -70,7 +69,7 @@ export class UsersService {
             throw new BadRequestException('User not found');
         }
 
-        Object.assign(existingUser, user);
+        Object.assign(existingUser, data);
         await this.usersRepository.save(existingUser);
         return _.omit(existingUser, ['password']);
     }

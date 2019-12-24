@@ -23,9 +23,6 @@ export class CreateUserDTO {
 
 @InputType()
 export class UpdateUserDTO {
-    @Field(type => ID)
-    readonly id: number;
-
     @Field(type => String, { nullable: true })
     @Length(1, 100)
     readonly firstName?: string;

@@ -7,7 +7,6 @@ export interface User {
 }
 
 export interface UpdateUser {
-    id: number;
     firstName?: string;
     surname?: string;
     email?: string;
