@@ -41,8 +41,8 @@ export class UsersResolver {
 
     @UseGuards(GqlAuthGuard)
     @Mutation(returns => UserRO)
-    async updateProfile(@Args('data') data: UpdateUserDTO,
-                        @CurrentUser() currentUser: User): Promise<UserRO> {
+    async updateCurrentUser(@CurrentUser() currentUser: User,
+                            @Args('data') data: UpdateUserDTO): Promise<UserRO> {
         return this.usersService.updateUser(currentUser.id, data);
     }
 
