@@ -14,15 +14,11 @@ export class RolesService {
     ) {}
 
     async findByName(name: string | string[]): Promise<Role[]> {
-        try {
-            const names = (Array.isArray(name)) ? _.uniq(name) : [name];
+        const names = (Array.isArray(name)) ? _.uniq(name) : [name];
 
-            return await this.rolesRepository
-                .createQueryBuilder('roles')
-                .where('roles.name IN (:names)', { names })
-                .getMany();
-        } catch (error) {
-            throw new InternalServerErrorException(error.message);
-        }
+        return await this.rolesRepository
+            .createQueryBuilder('roles')
+            .where('roles.name IN (:names)', { names })
+            .getMany();
     }
 }

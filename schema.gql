@@ -21,19 +21,29 @@ type LoginRO {
 }
 
 type Mutation {
-  createUser(createUserData: CreateUserDTO!): UserRO!
+  createUser(data: CreateUserDTO!): UserRO!
+  updateCurrentUser(data: UpdateUserDTO!): UserRO!
+  updateUser(data: UpdateUserDTO!, id: Float!): UserRO!
+  deleteUser(id: Float!): Boolean!
   login(loginData: LoginDTO!): LoginRO!
   logout: Boolean!
 }
 
 type Query {
   allUsers: [UserRO!]!
+  findUserByID(id: Float!): UserRO!
   currentUser: UserRO!
 }
 
 type RoleRO {
   id: ID!
   name: String!
+}
+
+input UpdateUserDTO {
+  firstName: String
+  surname: String
+  email: String
 }
 
 type UserRO {

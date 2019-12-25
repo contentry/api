@@ -5,17 +5,17 @@ import { RolesGuard } from '@modules/roles/guards/roles.guard';
 import { Roles } from '@modules/roles/roles.decorator';
 import { constants as rolesConstants } from '@utils/helpers/roles.helper';
 import { UsersService } from './users.service';
-import { CreateUserDTO, UserRO } from './users.dto';
+import { CreateUserDTO, UpdateUserDTO, UserRO } from './users.dto';
 import { User as CurrentUser } from './users.decorator';
-import { User } from './interfaces/user.interface';
+import { User, UpdateUser as UpdateUserInterface } from './interfaces/user.interface';
 
 @Resolver(of => UserRO)
 export class UsersResolver {
     constructor(private readonly usersService: UsersService) {}
 
     @Mutation(returns => UserRO)
-    createUser(@Args('createUserData') payload: CreateUserDTO): Promise<UserRO> {
-        const user: User = { ...payload };
+    createUser(@Args('data') data: CreateUserDTO): Promise<UserRO> {
+        const user: User = { ...data };
         return this.usersService.create(user);
     }
 
@@ -23,24 +23,41 @@ export class UsersResolver {
     @Roles(rolesConstants.ADMIN)
     @Query(returns => [UserRO])
     async allUsers(): Promise<UserRO[]> {
-        const users = await this.usersService.findAll();
+        return this.usersService.findAll();
+    }
 
-        if (users && users.length > 0) {
-            return users;
-        }
-
-        throw new BadRequestException('No users found.');
+    @UseGuards(GqlAuthGuard, RolesGuard)
+    @Roles(rolesConstants.ADMIN)
+    @Query(returns => UserRO)
+    async findUserByID(@Args('id') id: number): Promise<UserRO> {
+        return this.usersService.findByID(id);
     }
 
     @UseGuards(GqlAuthGuard)
     @Query(returns => UserRO)
     async currentUser(@CurrentUser() currentUser: User): Promise<UserRO> {
-        const user = await this.usersService.findByID(currentUser.id);
+        return this.usersService.findByID(currentUser.id);
+    }
 
-        if (user) {
-            return user;
-        }
+    @UseGuards(GqlAuthGuard)
+    @Mutation(returns => UserRO)
+    async updateCurrentUser(@CurrentUser() currentUser: User,
+                            @Args('data') data: UpdateUserDTO): Promise<UserRO> {
+        return this.usersService.updateUser(currentUser.id, data);
+    }
 
-        throw new BadRequestException('User not found.');
+    @UseGuards(GqlAuthGuard, RolesGuard)
+    @Roles(rolesConstants.ADMIN)
+    @Mutation(returns => UserRO)
+    updateUser(@Args('id') userId: number,
+               @Args('data') data: UpdateUserDTO): Promise<UserRO> {
+        return this.usersService.updateUser(userId, data);
+    }
+
+    @UseGuards(GqlAuthGuard, RolesGuard)
+    @Roles(rolesConstants.ADMIN)
+    @Mutation(returns => Boolean)
+    deleteUser(@Args('id') userId: number): Promise<boolean> {
+        return this.usersService.deleteUser(userId);
     }
 }
