@@ -26,10 +26,24 @@ export class UsersResolver {
         return this.usersService.findAll();
     }
 
+    @UseGuards(GqlAuthGuard, RolesGuard)
+    @Roles(rolesConstants.ADMIN)
+    @Query(returns => UserRO)
+    async findUserByID(@Args('id') id: number): Promise<UserRO> {
+        return this.usersService.findByID(id);
+    }
+
     @UseGuards(GqlAuthGuard)
     @Query(returns => UserRO)
     async currentUser(@CurrentUser() currentUser: User): Promise<UserRO> {
         return this.usersService.findByID(currentUser.id);
+    }
+
+    @UseGuards(GqlAuthGuard)
+    @Mutation(returns => UserRO)
+    async updateProfile(@Args('data') data: UpdateUserDTO,
+                        @CurrentUser() currentUser: User): Promise<UserRO> {
+        return this.usersService.updateUser(currentUser.id, data);
     }
 
     @UseGuards(GqlAuthGuard, RolesGuard)

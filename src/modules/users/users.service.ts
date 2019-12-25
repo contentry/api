@@ -33,11 +33,11 @@ export class UsersService {
             relations: ['roles']
         });
 
-        if (users && users.length) {
-            return users.map(user => _.omit(user, ['password']));
+        if (!users || users.length === 0) {
+            throw new BadRequestException('No users found.');
         }
 
-        throw new BadRequestException('No users found.');
+        return users.map(user => _.omit(user, ['password']));
     }
 
     async findByID(id: number): Promise<UserRO> {
@@ -46,11 +46,11 @@ export class UsersService {
             relations: ['roles']
         });
 
-        if (user) {
-            return _.omit(user, ['password']);
+        if (!user) {
+            throw new BadRequestException('User not found.');
         }
 
-        throw new BadRequestException('User not found.');
+        return _.omit(user, ['password']);
     }
 
     async findByEmail(email: string, withPass: boolean = false): Promise<User> {
@@ -59,7 +59,7 @@ export class UsersService {
             relations: ['roles']
         });
 
-        if (user) {
+        if (!user) {
             throw new BadRequestException('User not found.');
         }
 

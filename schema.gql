@@ -22,6 +22,7 @@ type LoginRO {
 
 type Mutation {
   createUser(data: CreateUserDTO!): UserRO!
+  updateProfile(data: UpdateUserDTO!): UserRO!
   updateUser(data: UpdateUserDTO!, id: Float!): UserRO!
   deleteUser(id: Float!): Boolean!
   login(loginData: LoginDTO!): LoginRO!
@@ -30,6 +31,7 @@ type Mutation {
 
 type Query {
   allUsers: [UserRO!]!
+  findUserByID(id: Float!): UserRO!
   currentUser: UserRO!
 }
 
