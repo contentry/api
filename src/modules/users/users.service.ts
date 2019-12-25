@@ -1,7 +1,6 @@
 import * as _ from 'lodash';
 import {
     Injectable,
-    InternalServerErrorException,
     BadRequestException
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
@@ -33,7 +32,12 @@ export class UsersService {
         const users = await this.usersRepository.find({
             relations: ['roles']
         });
-        return users.map(user => _.omit(user, ['password']));
+
+        if (users && users.length) {
+            return users.map(user => _.omit(user, ['password']));
+        }
+
+        throw new BadRequestException('No users found.');
     }
 
     async findByID(id: number): Promise<UserRO> {
@@ -42,7 +46,11 @@ export class UsersService {
             relations: ['roles']
         });
 
-        return _.omit(user, ['password']);
+        if (user) {
+            return _.omit(user, ['password']);
+        }
+
+        throw new BadRequestException('User not found.');
     }
 
     async findByEmail(email: string, withPass: boolean = false): Promise<User> {
@@ -50,6 +58,10 @@ export class UsersService {
             where: { email },
             relations: ['roles']
         });
+
+        if (user) {
+            throw new BadRequestException('User not found.');
+        }
 
         if (!withPass) {
             user = _.omit(user, ['password']);
@@ -66,7 +78,7 @@ export class UsersService {
         });
 
         if (!existingUser) {
-            throw new BadRequestException('User not found');
+            throw new BadRequestException('User not found.');
         }
 
         Object.assign(existingUser, data);
@@ -81,7 +93,7 @@ export class UsersService {
         });
 
         if (!existingUser) {
-            return false;
+            throw new BadRequestException('User not found.');
         }
 
         await this.usersRepository.remove(existingUser);
