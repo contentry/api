@@ -17,7 +17,7 @@
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-        "test:e2e": "jest --config ./test/jest-e2e.json",
+        "test:e2e": "jest --config ./test/jest-e2e.config.js",
         "typeorm": "node tsnode-typeorm",
         "database:seed": "ts-node -r tsconfig-paths/register src/database/seeds",
         "database:prepare": "npm run typeorm schema:drop && npm run typeorm migration:run && npm run database:seed"
@@ -68,19 +68,5 @@
         "tslint": "^5.20.0",
         "tslint-config-airbnb": "^5.11.2",
         "typescript": "^3.6.3"
-    },
-    "jest": {
-        "moduleFileExtensions": [
-            "js",
-            "json",
-            "ts"
-        ],
-        "rootDir": "src",
-        "testRegex": ".spec.ts$",
-        "transform": {
-            "^.+\\.(t|j)s$": "ts-jest"
-        },
-        "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
     }
 }
