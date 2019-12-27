@@ -1,3 +1,6 @@
+const { pathsToModuleNameMapper } = require('ts-jest/utils');
+const { compilerOptions } = require('./tsconfig');
+
 module.exports = {
     moduleFileExtensions: [
         "js",
@@ -5,12 +8,8 @@ module.exports = {
         "ts"
     ],
     rootDir: "test",
-    moduleNameMapper: {
-        "^@modules/(.*)$": "<rootDir>/../src/modules/$1",
-        "^@utils/(.*)$": "<rootDir>/../src/utils/$1",
-        "^@helpers/(.*)$": "<rootDir>/../src/helpers/$1",
-        "^@app/(.*)$": "<rootDir>/../src/$1"
-    },
+    // this assumes baseUrl: './src' in tsconfig.json, and rootDir: 'test' here
+    moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {prefix: '<rootDir>/../src/'}),
     testRegex: ".+\\.(e2e-)?(test|spec).(t|j)s$",
     transform: {
         "^.+\\.(t|j)s$": "ts-jest"
