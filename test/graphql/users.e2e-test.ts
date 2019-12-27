@@ -1,18 +1,21 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
+import { getRepository, Repository } from 'typeorm';
 import { AppModule } from '@app/app.module';
+import { User } from '@modules/users/entities';
 
 describe('GraphQL, Users', () => {
     let app: INestApplication;
+    let userRepository: Repository<User>;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         const module = await Test.createTestingModule({
             imports: [AppModule]
         }).compile();
-
         app = module.createNestApplication();
         await app.init();
+        userRepository = getRepository(User);
     });
 
     it('should register a new user', async () => {
@@ -45,6 +48,10 @@ describe('GraphQL, Users', () => {
     });
 
     afterEach(async () => {
+        await userRepository.query('DELETE FROM users');
+    });
+
+    afterAll(async () => {
         await app.close();
     });
 });
