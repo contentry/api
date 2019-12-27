@@ -1,15 +1,7 @@
 const config = require('config');
 const db = config.get('db');
 
-const testOptions = {
-    type: 'sqlite',
-    database: ':memory:',
-    synchronize: true,
-    dropSchema: true,
-    entities: ['dist/**/*.entity{.ts,.js}']
-};
-
-const options = {
+module.exports = {
     type: db.type || "mysql",
     host: db.host || "localhost",
     port: db.port || 3306,
@@ -26,5 +18,3 @@ const options = {
         migrationsDir: "src/database/migrations"
     },
 };
-
-module.exports = (process.env.NODE_ENV === 'test') ? testOptions : options;
