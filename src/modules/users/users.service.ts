@@ -104,13 +104,14 @@ export class UsersService {
         const roles = await this.rolesService.findByName(rolesName);
 
         if (!roles || !roles.length) {
-            return new BadRequestException('Role(s) not found.');
+            throw new BadRequestException('Role(s) not found.');
         }
 
         if (!user.roles) {
             user.roles = [];
         }
 
+        // TODO: duplicate roles?
         for (const role of roles) {
             user.roles.push(role);
         }
