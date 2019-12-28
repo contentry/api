@@ -11,7 +11,7 @@ module.exports = {
     // this assumes baseUrl: './src' in tsconfig.json, and rootDir: 'test' here
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {prefix: '<rootDir>/../src/'}),
     testRegex: ".+\\.(e2e-)?(test|spec).(t|j)s$",
-    clearMocks: true,
+    resetMocks: true,
     transform: {
         "^.+\\.(t|j)s$": "ts-jest"
     },

@@ -1,5 +1,4 @@
 import * as _ from 'lodash';
-import { Repository } from 'typeorm';
 import { BadRequestException, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -25,7 +24,7 @@ describe('UsersService', () => {
         admin: adminRole
     };
 
-    // mocked methods get overridden in tests, this is more like an interface
+    // mocked methods get reset before every test, this is more like an interface
     const mockUserRepository = {
         save: jest.fn(),
         find: jest.fn(),
@@ -58,22 +57,19 @@ describe('UsersService', () => {
 
     describe('create()', () => {
         let id: number = 1;
-        const userRepositorySaveArgs: User[] = [];
 
-        beforeAll(() => {
+        it('should create user with USER role', async () => {
+            const userRepositorySaveArgs: User[] = [];
             mockUserRepository.save = jest.fn((x: User) => {
                 userRepositorySaveArgs.push(_.cloneDeep(x));
                 // mock the saving itself - setting the object's ID
-                // needed for some (not all) tests
                 if (!x.id) {
                     x.id = id;
                     id += 1;
                 }
             });
             mockRolesService.findByName = jest.fn(() => [userRole]);
-        });
 
-        it('should create user with USER role', async () => {
             const inputUser: UserInterface = {
                 firstName: 'John',
                 surname: 'Wick',
@@ -105,6 +101,15 @@ describe('UsersService', () => {
         });
 
         it('should return created user without password', async () => {
+            mockUserRepository.save = jest.fn((x: User) => {
+                // mock the saving itself - setting the object's ID
+                if (!x.id) {
+                    x.id = id;
+                    id += 1;
+                }
+            });
+            mockRolesService.findByName = jest.fn(() => [userRole]);
+
             const inputUser: UserInterface = {
                 firstName: 'John',
                 surname: 'Wick',
@@ -130,7 +135,7 @@ describe('UsersService', () => {
 
     describe('findAll()', () => {
         it('should return users with roles and without passwords', async () => {
-            const dummyUsers: User[] = [
+            mockUserRepository.find = jest.fn(() => ([
                 new User({
                     id: 1,
                     firstName: 'John',
@@ -147,8 +152,8 @@ describe('UsersService', () => {
                     password: 'jondavis',
                     roles: [userRole]
                 })
-            ];
-            mockUserRepository.find = jest.fn(() => dummyUsers);
+            ]));
+
             const result: UserRO[] = await usersService.findAll();
 
             expect(mockUserRepository.find).toBeCalledTimes(1);
@@ -221,19 +226,18 @@ describe('UsersService', () => {
 
     describe('findByEmail()', () => {
         describe('should return a user', () => {
-            beforeAll(() => {
-                const john = new User({
-                    id: 1,
-                    firstName: 'John',
-                    surname: 'Wick',
-                    email: 'john.wick@contentry.org',
-                    password: 'johnwick',
-                    roles: [adminRole]
-                });
-                mockUserRepository.findOne = jest.fn(() => john);
+            const john = new User({
+                id: 1,
+                firstName: 'John',
+                surname: 'Wick',
+                email: 'john.wick@contentry.org',
+                password: 'johnwick',
+                roles: [adminRole]
             });
 
             it('with password', async () => {
+                mockUserRepository.findOne = jest.fn(() => john);
+
                 const result = await usersService.findByEmail('john.wick@contentry.org', true);
                 expect(mockUserRepository.findOne).toBeCalledWith({
                     where: { email: 'john.wick@contentry.org' },
@@ -249,6 +253,8 @@ describe('UsersService', () => {
                 });
             });
             it('without password - explicit parameter', async () => {
+                mockUserRepository.findOne = jest.fn(() => john);
+
                 const result = await usersService.findByEmail('john.wick@contentry.org', false);
                 expect(mockUserRepository.findOne).toBeCalledWith({
                     where: { email: 'john.wick@contentry.org' },
@@ -263,6 +269,8 @@ describe('UsersService', () => {
                 });
             });
             it('without password - default parameter', async () => {
+                mockUserRepository.findOne = jest.fn(() => john);
+
                 const result = await usersService.findByEmail('john.wick@contentry.org');
                 expect(mockUserRepository.findOne).toBeCalledWith({
                     where: { email: 'john.wick@contentry.org' },
@@ -289,20 +297,19 @@ describe('UsersService', () => {
     });
 
     describe('updateUser()', () => {
-        beforeAll(() => {
-            const john = new User({
-                id: 1,
-                firstName: 'John',
-                surname: 'Wick',
-                email: 'john.wick@contentry.org',
-                password: 'johnwick',
-                roles: [adminRole]
-            });
-            // tests mutate the returned object = need to return deep clone of John
-            mockUserRepository.findOne = jest.fn(() => _.cloneDeep(john));
+        const john = new User({
+            id: 1,
+            firstName: 'John',
+            surname: 'Wick',
+            email: 'john.wick@contentry.org',
+            password: 'johnwick',
+            roles: [adminRole]
         });
 
         it('should update user in database', async () => {
+            // tests mutate the returned object = need to return deep clone of John
+            mockUserRepository.findOne = jest.fn(() => _.cloneDeep(john));
+
             const data = {
                 firstName: 'Jack',
                 surname: 'King',
@@ -324,6 +331,8 @@ describe('UsersService', () => {
             });
         });
         it('should return updated user without password', async () => {
+            mockUserRepository.findOne = jest.fn(() => _.cloneDeep(john));
+
             const data = {
                 firstName: 'Jack',
                 surname: 'King',
@@ -340,6 +349,7 @@ describe('UsersService', () => {
             });
         });
         it('should return user even if nothing was updated', async () => {
+            mockUserRepository.findOne = jest.fn(() => _.cloneDeep(john));
             const result = await usersService.updateUser(1, {});
 
             expect(result).toEqual({
@@ -358,6 +368,7 @@ describe('UsersService', () => {
                 where: { id: 1 },
                 relations: ['roles']
             });
+            expect(mockUserRepository.save).not.toHaveBeenCalled();
         });
     });
 
@@ -403,11 +414,9 @@ describe('UsersService', () => {
 
     describe('assignRole()', () => {
         describe('should assign role/s to user', () => {
-            beforeEach(() => {
-                mockRolesService.findByName = jest.fn(roleName => [roles[roleName]]);
-            });
-
             it('single role', async () => {
+                mockRolesService.findByName = jest.fn(roleName => [roles[roleName]]);
+
                 const john = new User({
                     id: 1,
                     firstName: 'John',
@@ -430,6 +439,7 @@ describe('UsersService', () => {
             });
             it('multiple roles', async () => {
                 mockRolesService.findByName = jest.fn(() => [userRole, adminRole]);
+
                 const john = new User({
                     id: 1,
                     firstName: 'John',
@@ -451,7 +461,9 @@ describe('UsersService', () => {
                 });
             });
             it('if he doesn\'t have the property', async () => {
-                const john = new User({
+                mockRolesService.findByName = jest.fn(roleName => [roles[roleName]]);
+
+                const johnWithoutRoles = new User({
                     id: 1,
                     firstName: 'John',
                     surname: 'Wick',
@@ -459,9 +471,9 @@ describe('UsersService', () => {
                     password: 'johnwick',
                     roles: []
                 });
-                delete john.roles;
+                delete johnWithoutRoles.roles;
 
-                await usersService.assignRole(john, 'admin');
+                await usersService.assignRole(johnWithoutRoles, 'admin');
 
                 expect(mockUserRepository.save).toHaveBeenCalledWith({
                     id: 1,
@@ -474,11 +486,9 @@ describe('UsersService', () => {
             });
         });
         describe('should throw a bad request exception', () => {
-            beforeEach(() => {
-                mockRolesService.findByName = jest.fn(() => null);
-            });
-
             it('if single role doesn\'t exist', async () => {
+                mockRolesService.findByName = jest.fn(() => null);
+
                 const john = new User({
                     id: 1,
                     firstName: 'John',
@@ -493,6 +503,8 @@ describe('UsersService', () => {
                 expect(mockUserRepository.save).not.toHaveBeenCalled();
             });
             it('if multiple roles don\'t exist', async () => {
+                mockRolesService.findByName = jest.fn(() => null);
+
                 const john = new User({
                     id: 1,
                     firstName: 'John',
