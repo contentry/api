@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import { Repository } from 'typeorm';
-import { INestApplication } from '@nestjs/common';
+import { BadRequestException, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
@@ -15,11 +15,17 @@ describe('UsersService', () => {
     let app: INestApplication;
     let usersService: UsersService;
     let userRepository: Repository<User>;
-    const userRepositorySaveArgs: User[] = [];
-    let id: number = 1;
 
     const userRole = new Role('user');
     userRole.id = 1;
+    const adminRole = new Role('admin');
+    adminRole.id = 2;
+
+    const mockRepository = {
+        // gets overridden in some tests
+        save: jest.fn(),
+        find: jest.fn()
+    };
 
     beforeAll(async () => {
         const module = await Test.createTestingModule({
@@ -27,17 +33,7 @@ describe('UsersService', () => {
                 UsersService,
                 {
                     provide: getRepositoryToken(User),
-                    useValue: {
-                        save: jest.fn((x: User) => {
-                            userRepositorySaveArgs.push(_.cloneDeep(x));
-                            // mock the saving itself - setting the object's ID
-                            // needed for some (not all) tests
-                            if (!x.id) {
-                                x.id = id;
-                                id += 1;
-                            }
-                        })
-                    }
+                    useValue: mockRepository
                 },
                 {
                     provide: RolesService,
@@ -54,6 +50,21 @@ describe('UsersService', () => {
     });
 
     describe('create()', () => {
+        let id: number = 1;
+        const userRepositorySaveArgs: User[] = [];
+
+        beforeAll(() => {
+            mockRepository.save = jest.fn((x: User) => {
+                userRepositorySaveArgs.push(_.cloneDeep(x));
+                // mock the saving itself - setting the object's ID
+                // needed for some (not all) tests
+                if (!x.id) {
+                    x.id = id;
+                    id += 1;
+                }
+            });
+        });
+
         it('should create user with USER role', async () => {
             const inputUser: UserInterface = {
                 firstName: 'John',
@@ -105,10 +116,64 @@ describe('UsersService', () => {
 
             expect(result).toEqual(expected);
         });
+
+        afterEach(() => {
+            id = 1;
+        });
     });
 
-    afterEach(() => {
-        id = 1;
+    describe('findAll()', () => {
+        it('should return users with roles and without passwords', async () => {
+            const dummyUsers: User[] = [
+                new User({
+                    id: 1,
+                    firstName: 'John',
+                    surname: 'Wick',
+                    email: 'john.wick@contentry.org',
+                    password: 'johnwick',
+                    roles: [adminRole]
+                }),
+                new User({
+                    id: 2,
+                    firstName: 'Jonathan',
+                    surname: 'Davis',
+                    email: 'jon.davis@contentry.org',
+                    password: 'jondavis',
+                    roles: [userRole]
+                })
+            ];
+            mockRepository.find = jest.fn(() => dummyUsers);
+            const result: UserRO[] = await usersService.findAll();
+
+            expect(mockRepository.find).toBeCalledTimes(1);
+            expect(result).toHaveLength(2);
+            expect(result).toContainEqual({
+                id: 1,
+                firstName: 'John',
+                surname: 'Wick',
+                email: 'john.wick@contentry.org',
+                roles: [adminRole]
+            });
+            expect(result).toContainEqual({
+                id: 2,
+                firstName: 'Jonathan',
+                surname: 'Davis',
+                email: 'jon.davis@contentry.org',
+                roles: [userRole]
+            });
+        });
+        describe('should throw bad request exception when no users were found', () => {
+            it(' - falsy array', async () => {
+                mockRepository.find = jest.fn(() => null);
+
+                await expect(usersService.findAll()).rejects.toThrow(BadRequestException);
+            });
+            it(' - empty array', async () => {
+                mockRepository.find = jest.fn(() => []);
+
+                await expect(usersService.findAll()).rejects.toThrow(BadRequestException);
+            });
+        });
     });
 
     afterAll(async () => {
