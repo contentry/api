@@ -12,7 +12,8 @@
         "paths": {
             "@modules/*": ["modules/*"],
             "@utils/*": ["utils/*"],
-            "@helpers/*": ["helpers/*"]
+            "@helpers/*": ["helpers/*"],
+            "@app/*": ["./*"]
         },
         "incremental": true
     },
