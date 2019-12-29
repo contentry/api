@@ -1,4 +1,4 @@
-import { BadRequestException, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
 import { RolesGuard } from '@modules/roles/guards/roles.guard';
@@ -7,7 +7,7 @@ import { constants as rolesConstants } from '@utils/helpers/roles.helper';
 import { UsersService } from './users.service';
 import { CreateUserDTO, UpdateUserDTO, UserRO } from './users.dto';
 import { User as CurrentUser } from './users.decorator';
-import { User, UpdateUser as UpdateUserInterface } from './interfaces/user.interface';
+import { User } from './interfaces/user.interface';
 
 @Resolver(of => UserRO)
 export class UsersResolver {
