@@ -60,7 +60,7 @@ export class UsersService {
         });
 
         if (!user) {
-            throw new BadRequestException('User not found.');
+            return null;
         }
 
         if (!withPass) {

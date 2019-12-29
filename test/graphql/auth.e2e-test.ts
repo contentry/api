@@ -1,6 +1,5 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import * as _ from 'lodash';
 import * as request from 'supertest';
 import { getRepository, Repository } from 'typeorm';
 import { AppModule } from '@app/app.module';

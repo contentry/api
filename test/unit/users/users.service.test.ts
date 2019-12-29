@@ -285,10 +285,12 @@ describe('UsersService', () => {
                 });
             });
         });
-        it('should throw bad request exception if user doesn\'t exist', async () => {
+        it('should return null if user doesn\'t exist', async () => {
             mockUserRepository.findOne = jest.fn(() => null);
 
-            await expect(usersService.findByEmail('john.wick@contentry.org')).rejects.toThrow(BadRequestException);
+            const user = await usersService.findByEmail('john.wick@contentry.org');
+
+            expect(user).toBeNull();
             expect(mockUserRepository.findOne).toBeCalledWith({
                 where: { email: 'john.wick@contentry.org' },
                 relations: ['roles']
