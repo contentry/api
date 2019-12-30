@@ -18,10 +18,7 @@ describe('AuthService', () => {
     };
 
     const mockUsersService = {
-        findByEmail: jest.fn((email, withPass) => {
-            console.log('default findByEmail mock');
-            return null;
-        })
+        findByEmail: jest.fn()
     };
 
     beforeEach(async () => {
@@ -49,10 +46,7 @@ describe('AuthService', () => {
 
     describe('login()', () => {
         it('throws bad request exception if credentials are wrong', async () => {
-            mockUsersService.findByEmail = jest.fn((email, withPass) => {
-                console.log('login 1 findByEmail');
-                return null;
-            });
+            mockUsersService.findByEmail = jest.fn(() => null);
             const spyFindByEmailAndPass = jest.spyOn(authService, 'findByEmailAndPass');
 
             const user: UserInterface = {
@@ -76,10 +70,7 @@ describe('AuthService', () => {
                 email: 'john.wick@contentry.org',
                 password: 'johnwick'
             });
-            mockUsersService.findByEmail = jest.fn((email, withPass) => {
-                console.log('login 2 findByEmail');
-                return existingUser;
-            });
+            mockUsersService.findByEmail = jest.fn(() => existingUser);
 
             mockJwtService.sign = jest.fn(() => 'token');
 
@@ -119,10 +110,7 @@ describe('AuthService', () => {
 
     describe('findByEmailAndPass()', () => {
         it('returns null if user doesn\'t exist', async () => {
-            mockUsersService.findByEmail = jest.fn((email, withPass) => {
-                console.log('findByEmailAndPass 1 findByEmail');
-                return null;
-            });
+            mockUsersService.findByEmail = jest.fn(() => null);
 
             const spyPasswordsHelperCompare = jest.spyOn(PasswordsHelper, 'compare');
 
@@ -140,10 +128,7 @@ describe('AuthService', () => {
             const mockUser = new User({
                 password: 'babayaga'
             });
-            mockUsersService.findByEmail = jest.fn((email, withPass) => {
-                console.log('findByEmailAndPass 2 findByEmail');
-                return mockUser;
-            });
+            mockUsersService.findByEmail = jest.fn(() => mockUser);
 
             const originalPasswordCompare = PasswordsHelper.compare;
             const mockPasswordCompare = jest.fn(() => Promise.resolve(false));
@@ -168,10 +153,7 @@ describe('AuthService', () => {
                 email: 'john.wick@contentry.org',
                 password: 'johnwick'
             });
-            mockUsersService.findByEmail = jest.fn((email, withPass) => {
-                console.log('findByEmailAndPass 3 findByEmail');
-                return existingUser;
-            });
+            mockUsersService.findByEmail = jest.fn(() => existingUser);
 
             const originalPasswordCompare = PasswordsHelper.compare;
             const mockPasswordCompare = jest.fn(() => Promise.resolve(true));
@@ -205,19 +187,13 @@ describe('AuthService', () => {
                 surname: 'Wick',
                 email: 'john.wick@contentry.org'
             });
-            mockUsersService.findByEmail = jest.fn((email, withPass) => {
-                console.log('validate 1 findByEmail');
-                return expectedUser;
-            });
+            mockUsersService.findByEmail = jest.fn(() => expectedUser);
 
             const user = await authService.validate({ email });
             expect(user).toEqual(expectedUser);
         });
         it('returns null if user with payload email doesn\'t exist', async () => {
-            mockUsersService.findByEmail = jest.fn((email, withPass) => {
-                console.log('validate 2 findByEmail');
-                return null;
-            });
+            mockUsersService.findByEmail = jest.fn(() => null);
 
             const user = await authService.validate({
                 email: 'john.wick@contentry.org'
