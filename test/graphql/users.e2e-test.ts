@@ -369,7 +369,8 @@ describe('GraphQL, Users', () => {
         });
     });
 
-    describe('allUsers()', () => {
+    describe('methods that require login', () => {
+        // in order to reduce duplication with setting up to 2 users before each test
         const carlInfo: UserInterface = {
             firstName: 'Carl',
             surname: 'Johnson',
@@ -382,93 +383,94 @@ describe('GraphQL, Users', () => {
             email: 'john.wick@contentry.org',
             password: 'johnwick'
         };
+
+        // helper methods as the guard testing gets really repetitive
+        const assertQueryThrowsStatusCode = async (query: string, statusCode: number, accessToken?: string) => {
+            let requestPromise = request(app.getHttpServer()).post('/graphql');
+
+            if (accessToken) {
+                requestPromise = requestPromise.set('Authorization', `Bearer ${accessToken}`);
+            }
+
+            const res = await requestPromise.send({ query });
+
+            expect(res.status).toEqual(200);
+            expect(res.body.data).toBeNull();
+            expect(res.body.errors[0].message.statusCode).toEqual(statusCode);
+        };
+        // unauthorized requests are those that are not logged in = no accessToken in arguments
+        const assertQueryThrowsUnauthorized = async (query: string) =>
+            await assertQueryThrowsStatusCode(query, 401);
+        // forbidden requests are those that are logged in but lack permissions = we require login and pass the accessToken
+        const assertQueryThrowsForbidden = async (query: string, accessToken: string) =>
+            await assertQueryThrowsStatusCode(query, 403, accessToken);
+
         beforeEach(async () => {
             await usersService.create({ ...carlInfo });
-
-            await usersService.create({ ...johnInfo });
-            const createdUser = await usersService.findByEmail(johnInfo.email, true);
-            await usersService.assignRole(createdUser, constants.ADMIN);
         });
 
-        it('should throw fake 401 if user is not logged in', async () => {
-            const res = await request(app.getHttpServer())
-                .post('/graphql')
-                .send({
-                    query: `
-                            query {
-                              allUsers {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                });
-            expect(res.status).toEqual(200);
-            expect(res.body.data).toBeNull();
-            expect(res.body.errors[0].message.statusCode).toEqual(401);
-        });
-        it('should throw fake 403 if user is not an admin', async () => {
-            const { accessToken } = await authService.login({
-                email: carlInfo.email,
-                password: carlInfo.password
+        describe('methods that require admin role', () => {
+            beforeEach(async () => {
+                await usersService.create({ ...johnInfo });
+                const createdUser = await usersService.findByEmail(johnInfo.email, true);
+                await usersService.assignRole(createdUser, constants.ADMIN);
             });
-            const res = await request(app.getHttpServer())
-                .post('/graphql')
-                .set('Authorization', `Bearer ${accessToken}`)
-                .send({
-                    query: `
-                        query {
-                          allUsers {
-                              id
-                              firstName
-                              surname
-                              email
-                          }
-                        }`
+
+            describe('allUsers()', () => {
+                const allUsersQuery = `
+                    query {
+                      allUsers {
+                          id
+                          firstName
+                          surname
+                          email
+                      }
+                    }`;
+
+                it('should throw fake 401 if user is not logged in', async () => {
+                    await assertQueryThrowsUnauthorized(allUsersQuery);
                 });
-            expect(res.status).toEqual(200);
-            expect(res.body.data).toBeNull();
-            expect(res.body.errors[0].message.statusCode).toEqual(403);
-        });
-        it('should return all users if user is logged and is an admin', async () => {
-            const { accessToken } = await authService.login({
-                email: johnInfo.email,
-                password: johnInfo.password
-            });
-            const res = await request(app.getHttpServer())
-                .post('/graphql')
-                .set('Authorization', `Bearer ${accessToken}`)
-                .send({
-                    query: `
-                        query {
-                          allUsers {
-                              id
-                              firstName
-                              surname
-                              email
-                          }
-                        }`
+                it('should throw fake 403 if user is not an admin', async () => {
+                    const { accessToken: userToken } = await authService.login({
+                        email: carlInfo.email,
+                        password: carlInfo.password
+                    });
+                    await assertQueryThrowsForbidden(allUsersQuery, userToken);
                 });
-            expect(res.status).toEqual(200);
-            expect(res.body).toMatchObject({
-                data: {
-                    allUsers: [
-                        {
-                            id: expect.any(String),
-                            firstName: carlInfo.firstName,
-                            surname: carlInfo.surname,
-                            email: carlInfo.email
-                        },
-                        {
-                            id: expect.any(String),
-                            firstName: johnInfo.firstName,
-                            surname: johnInfo.surname,
-                            email: johnInfo.email
+                it('should return all users if user is logged and is an admin', async () => {
+                    const { accessToken: adminToken } = await authService.login({
+                        email: johnInfo.email,
+                        password: johnInfo.password
+                    });
+                    const res = await request(app.getHttpServer())
+                        .post('/graphql')
+                        .set('Authorization', `Bearer ${adminToken}`)
+                        .send({ query: allUsersQuery });
+
+                    expect(res.status).toEqual(200);
+                    expect(res.body).toMatchObject({
+                        data: {
+                            allUsers: [
+                                {
+                                    id: expect.any(String),
+                                    firstName: carlInfo.firstName,
+                                    surname: carlInfo.surname,
+                                    email: carlInfo.email
+                                },
+                                {
+                                    id: expect.any(String),
+                                    firstName: johnInfo.firstName,
+                                    surname: johnInfo.surname,
+                                    email: johnInfo.email
+                                }
+                            ]
                         }
-                    ]
-                }
+                    });
+                });
             });
+        });
+        describe('methods that do NOT require admin role', () => {
+
         });
     });
 
