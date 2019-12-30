@@ -9,6 +9,7 @@ import { User as UserInterface } from '@modules/users/interfaces/user.interface'
 import { UsersService } from '@modules/users/users.service';
 import { constants } from '@utils/helpers/roles.helper';
 import { AuthService } from '@modules/auth/auth.service';
+import { makeGQLHelperMethods } from '../helpers';
 
 describe('GraphQL, Users', () => {
     let app: INestApplication;
@@ -16,28 +17,10 @@ describe('GraphQL, Users', () => {
     let usersService: UsersService;
     let authService: AuthService;
 
-    // helper methods as the guard testing gets really repetitive
-    const assertQueryThrowsStatusCode = async (query: string, statusCode: number, accessToken?: string) => {
-        let requestPromise = request(app.getHttpServer()).post('/graphql');
-
-        if (accessToken) {
-            requestPromise = requestPromise.set('Authorization', `Bearer ${accessToken}`);
-        }
-
-        const res = await requestPromise.send({ query });
-
-        expect(res.status).toEqual(200);
-        expect(res.body.data).toBeNull();
-        expect(res.body.errors[0].message.statusCode).toEqual(statusCode);
-    };
-    const assertQueryThrowsBadRequest = async (query: string, accessToken?: string) =>
-        await assertQueryThrowsStatusCode(query, 400, accessToken);
-    // unauthorized requests are those that are not logged in = no accessToken in arguments
-    const assertQueryThrowsUnauthorized = async (query: string) =>
-        await assertQueryThrowsStatusCode(query, 401);
-    // forbidden requests are those that are logged in but lack permissions = we require login and pass the accessToken
-    const assertQueryThrowsForbidden = async (query: string, accessToken: string) =>
-        await assertQueryThrowsStatusCode(query, 403, accessToken);
+    let assertQueryThrowsBadRequest;
+    let assertQueryThrowsForbidden;
+    let assertQueryThrowsUnauthorized;
+    let prepareGQLRequest;
 
     beforeEach(async () => {
         const module = await Test.createTestingModule({
@@ -48,6 +31,16 @@ describe('GraphQL, Users', () => {
         userRepository = getRepository(User);
         usersService = module.get(UsersService);
         authService = module.get(AuthService);
+
+        // construct helper methods using the app instance, assign to declared variable
+        // fugly syntax but works
+        // (ordinary const { ... } = func(); syntax works, but is unavailable outside beforeEach())
+        ({
+            assertQueryThrowsBadRequest,
+            assertQueryThrowsForbidden,
+            assertQueryThrowsUnauthorized,
+            prepareGQLRequest
+        } = makeGQLHelperMethods(app));
     });
 
     afterEach(async () => {
@@ -63,8 +56,7 @@ describe('GraphQL, Users', () => {
                 email: 'test@contentry.org',
                 password: 'johnwick'
             };
-            const res = await request(app.getHttpServer())
-                .post('/graphql')
+            const res = await prepareGQLRequest()
                 .send({
                     query: `
                         mutation {
@@ -96,8 +88,7 @@ describe('GraphQL, Users', () => {
         describe('should return bad request or malformed GQL query', () => {
             // directly 400 status code
             it('invalid data object', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
@@ -112,8 +103,7 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid firstName', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
@@ -133,8 +123,7 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid surname', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
@@ -154,8 +143,7 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid email', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
@@ -175,8 +163,7 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid password', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
@@ -406,9 +393,7 @@ describe('GraphQL, Users', () => {
                         email: johnInfo.email,
                         password: johnInfo.password
                     });
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .set('Authorization', `Bearer ${adminToken}`)
+                    const res = await prepareGQLRequest(adminToken)
                         .send({ query: allUsersQuery });
 
                     expect(res.status).toEqual(200);
@@ -443,6 +428,21 @@ describe('GraphQL, Users', () => {
                       }
                     }`;
 
+                it('should throw real 400 if the GQL query is malformed ("id" not a number)', async () => {
+                    const res = await prepareGQLRequest()
+                        .send({ query: `
+                            query {
+                              findUserByID(id: "this is not a number") {
+                                  id
+                                  firstName
+                                  surname
+                                  email
+                              }
+                            }`
+                        });
+
+                    expect(res.status).toEqual(400);
+                });
                 it('should throw fake 401 if user is not logged in', async () => {
                     await assertQueryThrowsUnauthorized(findUserByIDQuery(carlId));
                 });
@@ -458,9 +458,7 @@ describe('GraphQL, Users', () => {
                         email: johnInfo.email,
                         password: johnInfo.password
                     });
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .set('Authorization', `Bearer ${adminToken}`)
+                    const res = await prepareGQLRequest(adminToken)
                         .send({ query: findUserByIDQuery(carlId) });
 
                     expect(res.status).toEqual(200);
@@ -478,6 +476,7 @@ describe('GraphQL, Users', () => {
             });
         });
         describe('methods that do NOT require admin role', () => {
+            // we should still make sure that it works with admin role as well
             describe('currentUser()', () => {
                 const currentUserQuery = `
                     query {
@@ -498,9 +497,7 @@ describe('GraphQL, Users', () => {
                             email: carlInfo.email,
                             password: carlInfo.password
                         });
-                        const res = await request(app.getHttpServer())
-                            .post('/graphql')
-                            .set('Authorization', `Bearer ${userToken}`)
+                        const res = await prepareGQLRequest(userToken)
                             .send({ query: currentUserQuery });
 
                         expect(res.status).toEqual(200);
@@ -520,9 +517,7 @@ describe('GraphQL, Users', () => {
                             email: johnInfo.email,
                             password: johnInfo.password
                         });
-                        const res = await request(app.getHttpServer())
-                            .post('/graphql')
-                            .set('Authorization', `Bearer ${adminToken}`)
+                        const res = await prepareGQLRequest(adminToken)
                             .send({ query: currentUserQuery });
 
                         expect(res.status).toEqual(200);
@@ -540,7 +535,40 @@ describe('GraphQL, Users', () => {
                 });
             });
             describe('updateCurrentUser()', () => {
-
+                describe('should throw real 400 if GQL query is malformed', () => {
+                    it.todo('invalid firstName');
+                    it.todo('invalid surname');
+                    it.todo('invalid email');
+                });
+                describe('should throw fake 400 if passed invalid data', () => {
+                    describe('firstName', () => {
+                        it.todo('empty');
+                        it.todo('longer than 100 chars');
+                    });
+                    describe('surname', () => {
+                        it.todo('empty');
+                        it.todo('longer than 100 chars');
+                    });
+                    describe('email', () => {
+                        it.todo('empty');
+                        it.todo('not an email');
+                    });
+                });
+                it.todo('should throw fake 401 if user is not logged in');
+                it.todo('shouldn\'t change any data if passed an empty object');
+                describe('should change user data', () => {
+                    describe('single field', () => {
+                        it.todo('firstName');
+                        it.todo('surname');
+                        it.todo('email');
+                    });
+                    describe('two fields', () => {
+                        it.todo('firstName and surname');
+                        it.todo('firstName and email');
+                        it.todo('surname and email');
+                    });
+                    it.todo('all fields');
+                });
             });
         });
     });

@@ -1,4 +1,4 @@
-import { IsEmail, Length } from 'class-validator';
+import { IsEmail, Length, IsOptional } from 'class-validator';
 import { Field, ObjectType, InputType, ID } from 'type-graphql';
 import { RoleRO } from '@modules/roles/roles.dto';
 
@@ -25,14 +25,17 @@ export class CreateUserDTO {
 export class UpdateUserDTO {
     @Field(type => String, { nullable: true })
     @Length(1, 100)
+    @IsOptional()
     readonly firstName?: string;
 
     @Field(type => String, { nullable: true })
     @Length(1, 100)
+    @IsOptional()
     readonly surname?: string;
 
     @Field(type => String, { nullable: true })
     @IsEmail()
+    @IsOptional()
     readonly email?: string;
 }
 
