@@ -376,7 +376,7 @@ describe('GraphQL, Users', () => {
     });
 
     describe('methods that require login', () => {
-        // in order to reduce duplication with setting up to 2 users before each test
+        // in order to reduce duplication with setting up 2 users before each test
         const carlInfo: UserInterface = {
             firstName: 'Carl',
             surname: 'Johnson',
@@ -415,19 +415,18 @@ describe('GraphQL, Users', () => {
             await assertQueryThrowsStatusCode(query, 403, accessToken);
 
         beforeEach(async () => {
+            // Carl - just a user
             await usersService.create({ ...carlInfo });
-            const createdUser = await usersService.findByEmail(carlInfo.email);
+            let createdUser = await usersService.findByEmail(carlInfo.email);
             carlId = createdUser.id;
+            // John - user and admin
+            await usersService.create({ ...johnInfo });
+            createdUser = await usersService.findByEmail(johnInfo.email, true);
+            johnId = createdUser.id;
+            await usersService.assignRole(createdUser, constants.ADMIN);
         });
 
         describe('methods that require admin role', () => {
-            beforeEach(async () => {
-                await usersService.create({ ...johnInfo });
-                const createdUser = await usersService.findByEmail(johnInfo.email, true);
-                johnId = createdUser.id;
-                await usersService.assignRole(createdUser, constants.ADMIN);
-            });
-
             describe('allUsers()', () => {
                 const allUsersQuery = `
                     query {
@@ -526,7 +525,67 @@ describe('GraphQL, Users', () => {
             });
         });
         describe('methods that do NOT require admin role', () => {
+            describe('currentUser()', () => {
+                const currentUserQuery = `
+                    query {
+                      currentUser {
+                          id
+                          firstName
+                          surname
+                          email
+                      }
+                    }`;
 
+                it('should throw fake 401 if user is not logged in', async () => {
+                    await assertQueryThrowsUnauthorized(currentUserQuery);
+                });
+                describe('should return current user if user is logged in', () => {
+                    it('and is a user', async () => {
+                        const { accessToken: userToken } = await authService.login({
+                            email: carlInfo.email,
+                            password: carlInfo.password
+                        });
+                        const res = await request(app.getHttpServer())
+                            .post('/graphql')
+                            .set('Authorization', `Bearer ${userToken}`)
+                            .send({ query: currentUserQuery });
+
+                        expect(res.status).toEqual(200);
+                        expect(res.body).toMatchObject({
+                            data: {
+                                currentUser: {
+                                    id: `${carlId}`,
+                                    firstName: carlInfo.firstName,
+                                    surname: carlInfo.surname,
+                                    email: carlInfo.email
+                                }
+                            }
+                        });
+                    });
+                    it('and is an admin', async () => {
+                        const { accessToken: adminToken } = await authService.login({
+                            email: johnInfo.email,
+                            password: johnInfo.password
+                        });
+                        const res = await request(app.getHttpServer())
+                            .post('/graphql')
+                            .set('Authorization', `Bearer ${adminToken}`)
+                            .send({ query: currentUserQuery });
+
+                        expect(res.status).toEqual(200);
+                        expect(res.body).toMatchObject({
+                            data: {
+                                currentUser: {
+                                    id: `${johnId}`,
+                                    firstName: johnInfo.firstName,
+                                    surname: johnInfo.surname,
+                                    email: johnInfo.email
+                                }
+                            }
+                        });
+                    });
+                });
+            });
         });
     });
 });
