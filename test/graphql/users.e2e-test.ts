@@ -16,6 +16,29 @@ describe('GraphQL, Users', () => {
     let usersService: UsersService;
     let authService: AuthService;
 
+    // helper methods as the guard testing gets really repetitive
+    const assertQueryThrowsStatusCode = async (query: string, statusCode: number, accessToken?: string) => {
+        let requestPromise = request(app.getHttpServer()).post('/graphql');
+
+        if (accessToken) {
+            requestPromise = requestPromise.set('Authorization', `Bearer ${accessToken}`);
+        }
+
+        const res = await requestPromise.send({ query });
+
+        expect(res.status).toEqual(200);
+        expect(res.body.data).toBeNull();
+        expect(res.body.errors[0].message.statusCode).toEqual(statusCode);
+    };
+    const assertQueryThrowsBadRequest = async (query: string, accessToken?: string) =>
+        await assertQueryThrowsStatusCode(query, 400, accessToken);
+    // unauthorized requests are those that are not logged in = no accessToken in arguments
+    const assertQueryThrowsUnauthorized = async (query: string) =>
+        await assertQueryThrowsStatusCode(query, 401);
+    // forbidden requests are those that are logged in but lack permissions = we require login and pass the accessToken
+    const assertQueryThrowsForbidden = async (query: string, accessToken: string) =>
+        await assertQueryThrowsStatusCode(query, 403, accessToken);
+
     beforeEach(async () => {
         const module = await Test.createTestingModule({
             imports: [AppModule]
@@ -177,199 +200,150 @@ describe('GraphQL, Users', () => {
             // response.data = null, response.errors[0].message.statusCode = 400
             describe('firstName field', () => {
                 it('empty', async () => {
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "",
-                                surname: "Wick",
-                                email: "test@contentry.org",
-                                password: "johnwick"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    // TODO: more robust?
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "",
+                            surname: "Wick",
+                            email: "test@contentry.org",
+                            password: "johnwick"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
                 it('longer than 100 chars', async () => {
                     const firstName = _.repeat('a', 101);
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "${firstName}",
-                                surname: "Wick",
-                                email: "test@contentry.org",
-                                password: "johnwick"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "${firstName}",
+                            surname: "Wick",
+                            email: "test@contentry.org",
+                            password: "johnwick"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
             });
             describe('surname field', () => {
                 it('empty', async () => {
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "",
-                                email: "test@contentry.org",
-                                password: "johnwick"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "John",
+                            surname: "",
+                            email: "test@contentry.org",
+                            password: "johnwick"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
                 it('longer than 100 chars', async () => {
                     const surname = _.repeat('a', 101);
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "${surname}",
-                                email: "test@contentry.org",
-                                password: "johnwick"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "John",
+                            surname: "${surname}",
+                            email: "test@contentry.org",
+                            password: "johnwick"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
             });
             describe('email field', () => {
                 it('empty', async () => {
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "Wick",
-                                email: "",
-                                password: "johnwick"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "John",
+                            surname: "Wick",
+                            email: "",
+                            password: "johnwick"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
                 it('not an email', async () => {
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "Wick",
-                                email: "thisisnotanemail",
-                                password: "johnwick"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "John",
+                            surname: "Wick",
+                            email: "thisisnotanemail",
+                            password: "johnwick"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
             });
             describe('password field', () => {
                 it('shorter than 6 chars', async () => {
                     const password = _.repeat('a', 5);
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "Wick",
-                                email: "test@contentry.org",
-                                password: "${password}"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "John",
+                            surname: "Wick",
+                            email: "test@contentry.org",
+                            password: "${password}"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
                 it('longer than 50 chars', async () => {
                     const password = _.repeat('a', 51);
-                    const res = await request(app.getHttpServer())
-                        .post('/graphql')
-                        .send({
-                            query: `
-                            mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "Wick",
-                                email: "test@contentry.org",
-                                password: "${password}"
-                              }) {
-                                  id
-                                  firstName
-                                  surname
-                                  email
-                              }
-                            }`
-                        });
-                    expect(res.status).toEqual(200);
-                    expect(res.body.data).toBeNull();
-                    expect(res.body.errors[0].message.statusCode).toEqual(400);
+                    await assertQueryThrowsBadRequest(`
+                        mutation {
+                          createUser(data: {
+                            firstName: "John",
+                            surname: "Wick",
+                            email: "test@contentry.org",
+                            password: "${password}"
+                          }) {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                    );
                 });
             });
         });
@@ -392,27 +366,6 @@ describe('GraphQL, Users', () => {
         // ID's are separate, so they don't interfere with saving new user to the repository between tests
         let carlId: number;
         let johnId: number;
-
-        // helper methods as the guard testing gets really repetitive
-        const assertQueryThrowsStatusCode = async (query: string, statusCode: number, accessToken?: string) => {
-            let requestPromise = request(app.getHttpServer()).post('/graphql');
-
-            if (accessToken) {
-                requestPromise = requestPromise.set('Authorization', `Bearer ${accessToken}`);
-            }
-
-            const res = await requestPromise.send({ query });
-
-            expect(res.status).toEqual(200);
-            expect(res.body.data).toBeNull();
-            expect(res.body.errors[0].message.statusCode).toEqual(statusCode);
-        };
-        // unauthorized requests are those that are not logged in = no accessToken in arguments
-        const assertQueryThrowsUnauthorized = async (query: string) =>
-            await assertQueryThrowsStatusCode(query, 401);
-        // forbidden requests are those that are logged in but lack permissions = we require login and pass the accessToken
-        const assertQueryThrowsForbidden = async (query: string, accessToken: string) =>
-            await assertQueryThrowsStatusCode(query, 403, accessToken);
 
         beforeEach(async () => {
             // Carl - just a user
@@ -585,6 +538,9 @@ describe('GraphQL, Users', () => {
                         });
                     });
                 });
+            });
+            describe('updateCurrentUser()', () => {
+
             });
         });
     });
