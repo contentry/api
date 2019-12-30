@@ -7,7 +7,7 @@ import { User } from '@modules/users/entities';
 import { UsersService } from '@modules/users/users.service';
 import { UserRO } from '@modules/users/users.dto';
 
-describe('GraphQL, Users', () => {
+describe('GraphQL, Auth', () => {
     let app: INestApplication;
     let userRepository: Repository<User>;
     let usersService: UsersService;

@@ -15,7 +15,7 @@
         "lint": "tslint -p tsconfig.json -c tslint.json",
         "pretest": "npm run test:prepare",
         "pretest:debug": "npm run test:prepare",
-        "test": "jest",
+        "test": "jest --runInBand",
         "test:watch": "npm test -- --watch",
         "test:cov": "npm test -- --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",

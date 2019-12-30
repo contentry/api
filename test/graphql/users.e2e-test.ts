@@ -5,10 +5,16 @@ import * as request from 'supertest';
 import { getRepository, Repository } from 'typeorm';
 import { AppModule } from '@app/app.module';
 import { User } from '@modules/users/entities';
+import { User as UserInterface } from '@modules/users/interfaces/user.interface';
+import { UsersService } from '@modules/users/users.service';
+import { constants } from '@utils/helpers/roles.helper';
+import { AuthService } from '@modules/auth/auth.service';
 
 describe('GraphQL, Users', () => {
     let app: INestApplication;
     let userRepository: Repository<User>;
+    let usersService: UsersService;
+    let authService: AuthService;
 
     beforeAll(async () => {
         const module = await Test.createTestingModule({
@@ -17,6 +23,8 @@ describe('GraphQL, Users', () => {
         app = module.createNestApplication();
         await app.init();
         userRepository = getRepository(User);
+        usersService = module.get(UsersService);
+        authService = module.get(AuthService);
     });
     describe('createUser()', () => {
         it('should register a new user', async () => {
@@ -357,6 +365,109 @@ describe('GraphQL, Users', () => {
                     expect(res.body.data).toBeNull();
                     expect(res.body.errors[0].message.statusCode).toEqual(400);
                 });
+            });
+        });
+    });
+
+    describe('allUsers()', () => {
+        const carlInfo: UserInterface = {
+            firstName: 'Carl',
+            surname: 'Johnson',
+            email: 'carl.johnson@contentry.org',
+            password: 'carljohnson'
+        };
+        const johnInfo: UserInterface = {
+            firstName: 'John',
+            surname: 'Wick',
+            email: 'john.wick@contentry.org',
+            password: 'johnwick'
+        };
+        beforeEach(async () => {
+            await usersService.create({ ...carlInfo });
+
+            await usersService.create({ ...johnInfo });
+            const createdUser = await usersService.findByEmail(johnInfo.email, true);
+            await usersService.assignRole(createdUser, constants.ADMIN);
+        });
+
+        it('should throw fake 401 if user is not logged in', async () => {
+            const res = await request(app.getHttpServer())
+                .post('/graphql')
+                .send({
+                    query: `
+                            query {
+                              allUsers {
+                                  id
+                                  firstName
+                                  surname
+                                  email
+                              }
+                            }`
+                });
+            expect(res.status).toEqual(200);
+            expect(res.body.data).toBeNull();
+            expect(res.body.errors[0].message.statusCode).toEqual(401);
+        });
+        it('should throw fake 403 if user is not an admin', async () => {
+            const { accessToken } = await authService.login({
+                email: carlInfo.email,
+                password: carlInfo.password
+            });
+            const res = await request(app.getHttpServer())
+                .post('/graphql')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    query: `
+                        query {
+                          allUsers {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                });
+            expect(res.status).toEqual(200);
+            expect(res.body.data).toBeNull();
+            expect(res.body.errors[0].message.statusCode).toEqual(403);
+        });
+        it('should return all users if user is logged and is an admin', async () => {
+            const { accessToken } = await authService.login({
+                email: johnInfo.email,
+                password: johnInfo.password
+            });
+            const res = await request(app.getHttpServer())
+                .post('/graphql')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    query: `
+                        query {
+                          allUsers {
+                              id
+                              firstName
+                              surname
+                              email
+                          }
+                        }`
+                });
+            expect(res.status).toEqual(200);
+            expect(res.body).toMatchObject({
+                data: {
+                    allUsers: [
+                        {
+                            id: expect.any(String),
+                            firstName: carlInfo.firstName,
+                            surname: carlInfo.surname,
+                            email: carlInfo.email
+                        },
+                        {
+                            id: expect.any(String),
+                            firstName: johnInfo.firstName,
+                            surname: johnInfo.surname,
+                            email: johnInfo.email
+                        }
+                    ]
+                }
             });
         });
     });
