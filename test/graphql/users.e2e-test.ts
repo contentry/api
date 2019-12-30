@@ -383,6 +383,9 @@ describe('GraphQL, Users', () => {
             email: 'john.wick@contentry.org',
             password: 'johnwick'
         };
+        // ID's are separate, so they don't interfere with saving new user to the repository between tests
+        let carlId: number;
+        let johnId: number;
 
         // helper methods as the guard testing gets really repetitive
         const assertQueryThrowsStatusCode = async (query: string, statusCode: number, accessToken?: string) => {
@@ -407,12 +410,15 @@ describe('GraphQL, Users', () => {
 
         beforeEach(async () => {
             await usersService.create({ ...carlInfo });
+            const createdUser = await usersService.findByEmail(carlInfo.email);
+            carlId = createdUser.id;
         });
 
         describe('methods that require admin role', () => {
             beforeEach(async () => {
                 await usersService.create({ ...johnInfo });
                 const createdUser = await usersService.findByEmail(johnInfo.email, true);
+                johnId = createdUser.id;
                 await usersService.assignRole(createdUser, constants.ADMIN);
             });
 
@@ -464,6 +470,50 @@ describe('GraphQL, Users', () => {
                                     email: johnInfo.email
                                 }
                             ]
+                        }
+                    });
+                });
+            });
+            describe('findUserByID()', () => {
+                const findUserByIDQuery = (id: number) => `
+                    query {
+                      findUserByID(id: ${id}) {
+                          id
+                          firstName
+                          surname
+                          email
+                      }
+                    }`;
+
+                it('should throw fake 401 if user is not logged in', async () => {
+                    await assertQueryThrowsUnauthorized(findUserByIDQuery(carlId));
+                });
+                it('should throw fake 403 if user is not an admin', async () => {
+                    const { accessToken: userToken } = await authService.login({
+                        email: carlInfo.email,
+                        password: carlInfo.password
+                    });
+                    await assertQueryThrowsForbidden(findUserByIDQuery(carlId), userToken);
+                });
+                it('should return all users if user is logged and is an admin', async () => {
+                    const { accessToken: adminToken } = await authService.login({
+                        email: johnInfo.email,
+                        password: johnInfo.password
+                    });
+                    const res = await request(app.getHttpServer())
+                        .post('/graphql')
+                        .set('Authorization', `Bearer ${adminToken}`)
+                        .send({ query: findUserByIDQuery(carlId) });
+
+                    expect(res.status).toEqual(200);
+                    expect(res.body).toMatchObject({
+                        data: {
+                            findUserByID: {
+                                id: `${carlId}`,
+                                firstName: carlInfo.firstName,
+                                surname: carlInfo.surname,
+                                email: carlInfo.email
+                            }
                         }
                     });
                 });
