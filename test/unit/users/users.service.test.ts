@@ -36,7 +36,7 @@ describe('UsersService', () => {
         findByName: jest.fn()
     };
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         const module = await Test.createTestingModule({
             providers: [
                 UsersService,
@@ -55,8 +55,16 @@ describe('UsersService', () => {
         usersService = module.get(UsersService);
     });
 
+    afterEach(async () => {
+        await app.close();
+    });
+
     describe('create()', () => {
         let id: number = 1;
+
+        afterEach(() => {
+            id = 1;
+        });
 
         it('should create user with USER role', async () => {
             const userRepositorySaveArgs: User[] = [];
@@ -126,10 +134,6 @@ describe('UsersService', () => {
             const result: UserRO = await usersService.create(inputUser);
 
             expect(result).toEqual(expected);
-        });
-
-        afterEach(() => {
-            id = 1;
         });
     });
 
@@ -574,9 +578,5 @@ describe('UsersService', () => {
                 roles: []
             });
         });
-    });
-
-    afterAll(async () => {
-        await app.close();
     });
 });

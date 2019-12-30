@@ -13,7 +13,7 @@ describe('GraphQL, Auth', () => {
     let usersService: UsersService;
     let existingUser: UserRO;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         const module = await Test.createTestingModule({
             imports: [AppModule]
         }).compile();
@@ -21,9 +21,7 @@ describe('GraphQL, Auth', () => {
         await app.init();
         userRepository = getRepository(User);
         usersService = module.get(UsersService);
-    });
 
-    beforeEach(async () => {
         // ensure a user exists
         existingUser = await usersService.create({
             firstName: 'John',
@@ -32,6 +30,12 @@ describe('GraphQL, Auth', () => {
             password: 'johnwick'
         });
     });
+
+    afterEach(async () => {
+        await userRepository.query('DELETE FROM users');
+        await app.close();
+    });
+
     describe('login()', () => {
         it('should return JWT token on a successful login', async () => {
             const res = await request(app.getHttpServer())
@@ -127,13 +131,5 @@ describe('GraphQL, Auth', () => {
             expect(res.body.data).toBeNull();
             expect(res.body.errors[0].message.statusCode).toEqual(400);
         });
-    });
-
-    afterEach(async () => {
-        await userRepository.query('DELETE FROM users');
-    });
-
-    afterAll(async () => {
-        await app.close();
     });
 });

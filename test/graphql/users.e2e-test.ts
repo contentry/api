@@ -16,7 +16,7 @@ describe('GraphQL, Users', () => {
     let usersService: UsersService;
     let authService: AuthService;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         const module = await Test.createTestingModule({
             imports: [AppModule]
         }).compile();
@@ -26,6 +26,12 @@ describe('GraphQL, Users', () => {
         usersService = module.get(UsersService);
         authService = module.get(AuthService);
     });
+
+    afterEach(async () => {
+        await userRepository.query('DELETE FROM users');
+        await app.close();
+    });
+
     describe('createUser()', () => {
         it('should register a new user', async () => {
             const user = {
@@ -522,13 +528,5 @@ describe('GraphQL, Users', () => {
         describe('methods that do NOT require admin role', () => {
 
         });
-    });
-
-    afterEach(async () => {
-        await userRepository.query('DELETE FROM users');
-    });
-
-    afterAll(async () => {
-        await app.close();
     });
 });

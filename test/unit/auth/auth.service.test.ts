@@ -24,7 +24,7 @@ describe('AuthService', () => {
         })
     };
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         const module = await Test.createTestingModule({
             providers: [
                 AuthService,
@@ -41,6 +41,10 @@ describe('AuthService', () => {
         app = module.createNestApplication();
         await app.init();
         authService = module.get(AuthService);
+    });
+
+    afterEach(async () => {
+        await app.close();
     });
 
     describe('login()', () => {
@@ -220,9 +224,5 @@ describe('AuthService', () => {
             });
             expect(user).toBeNull();
         });
-    });
-
-    afterAll(async () => {
-        await app.close();
     });
 });
