@@ -444,45 +444,32 @@ describe('GraphQL, Users', () => {
                     await assertQueryThrowsUnauthorized(currentUserQuery);
                 });
                 describe('should return current user if user is logged in', () => {
-                    it('and is a user', async () => {
-                        const { accessToken: userToken } = await authService.login({
-                            email: carlInfo.email,
-                            password: carlInfo.password
+                    const actualCurrentUserTest = async (userInfo: any) => {
+                        const { accessToken } = await authService.login({
+                            email: userInfo.email,
+                            password: userInfo.password
                         });
-                        const res = await prepareGQLRequest(userToken)
+                        const res = await prepareGQLRequest(accessToken)
                             .send({ query: currentUserQuery });
 
                         expect(res.status).toEqual(200);
                         expect(res.body).toMatchObject({
                             data: {
                                 currentUser: {
-                                    id: `${carlInfo.id}`,
-                                    firstName: carlInfo.firstName,
-                                    surname: carlInfo.surname,
-                                    email: carlInfo.email
+                                    id: `${userInfo.id}`,
+                                    firstName: userInfo.firstName,
+                                    surname: userInfo.surname,
+                                    email: userInfo.email
                                 }
                             }
                         });
+                    };
+
+                    it('and is a user', async () => {
+                        await actualCurrentUserTest(carlInfo);
                     });
                     it('and is an admin', async () => {
-                        const { accessToken: adminToken } = await authService.login({
-                            email: johnInfo.email,
-                            password: johnInfo.password
-                        });
-                        const res = await prepareGQLRequest(adminToken)
-                            .send({ query: currentUserQuery });
-
-                        expect(res.status).toEqual(200);
-                        expect(res.body).toMatchObject({
-                            data: {
-                                currentUser: {
-                                    id: `${johnInfo.id}`,
-                                    firstName: johnInfo.firstName,
-                                    surname: johnInfo.surname,
-                                    email: johnInfo.email
-                                }
-                            }
-                        });
+                        await actualCurrentUserTest(johnInfo);
                     });
                 });
             });
@@ -598,6 +585,7 @@ describe('GraphQL, Users', () => {
                         expect(res.status).toEqual(400);
                     });
                 });
+
                 describe('should throw fake 400 if passed invalid data', () => {
                     describe('firstName', () => {
                         it('empty', async () => {
@@ -654,6 +642,7 @@ describe('GraphQL, Users', () => {
                         });
                     });
                 });
+
                 it('should throw fake 401 if user is not logged in', async () => {
                     await assertQueryThrowsUnauthorized(updateCurrentUserQuery(data));
                 });
