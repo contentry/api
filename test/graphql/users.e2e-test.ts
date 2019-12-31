@@ -17,10 +17,10 @@ describe('GraphQL, Users', () => {
     let usersService: UsersService;
     let authService: AuthService;
 
-    let assertQueryThrowsBadRequest;
-    let assertQueryThrowsForbidden;
-    let assertQueryThrowsUnauthorized;
-    let prepareGQLRequest;
+    let assertQueryThrowsBadRequest: (query: string, accessToken?: string) => Promise<void>;
+    let assertQueryThrowsForbidden: (query: string, accessToken: string) => Promise<void>;
+    let assertQueryThrowsUnauthorized: (query: string) => Promise<void>;
+    let prepareGQLRequest: (accessToken?: string) => request.Test;
 
     beforeEach(async () => {
         const module = await Test.createTestingModule({
