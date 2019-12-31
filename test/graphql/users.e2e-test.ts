@@ -49,7 +49,7 @@ describe('GraphQL, Users', () => {
     });
 
     describe('createUser()', () => {
-        let user: any = {
+        const user: any = {
             firstName: 'John',
             surname: 'Wick',
             email: 'test@contentry.org',
@@ -58,12 +58,10 @@ describe('GraphQL, Users', () => {
 
         beforeEach(() => {
             // reset the values
-            user = {
-                firstName: 'John',
-                surname: 'Wick',
-                email: 'test@contentry.org',
-                password: 'johnwick'
-            };
+            user.firstName = 'John';
+            user.surname = 'Wick';
+            user.email = 'test@contentry.org';
+            user.password = 'johnwick';
         });
 
         it('should register a new user', async () => {
@@ -92,8 +90,6 @@ describe('GraphQL, Users', () => {
             });
         });
         describe('should return bad request or malformed GQL query', () => {
-
-
             // directly 400 status code
             it('invalid data object', async () => {
                 const res = await prepareGQLRequest()
@@ -111,12 +107,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid firstName', async () => {
-                data.firstName = 1;
+                user.firstName = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: ${gqlStringify(data)}) {
+                              createUser(data: ${gqlStringify(user)}) {
                                   id
                                   firstName
                                   surname
@@ -127,12 +123,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid surname', async () => {
-                data.surname = 1;
+                user.surname = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: ${gqlStringify(data)}) {
+                              createUser(data: ${gqlStringify(user)}) {
                                   id
                                   firstName
                                   surname
@@ -143,12 +139,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid email', async () => {
-                data.email = 1;
+                user.email = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: ${gqlStringify(data)}) {
+                              createUser(data: ${gqlStringify(user)}) {
                                   id
                                   firstName
                                   surname
@@ -159,12 +155,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid password', async () => {
-                data.password = 1;
+                user.password = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: ${gqlStringify(data)}) {
+                              createUser(data: ${gqlStringify(user)}) {
                                   id
                                   firstName
                                   surname
@@ -179,14 +175,10 @@ describe('GraphQL, Users', () => {
             // response.data = null, response.errors[0].message.statusCode = 400
             describe('firstName field', () => {
                 it('empty', async () => {
+                    user.firstName = '';
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "",
-                            surname: "Wick",
-                            email: "test@contentry.org",
-                            password: "johnwick"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -196,15 +188,10 @@ describe('GraphQL, Users', () => {
                     );
                 });
                 it('longer than 100 chars', async () => {
-                    const firstName = _.repeat('a', 101);
+                    user.firstName = _.repeat('a', 101);
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "${firstName}",
-                            surname: "Wick",
-                            email: "test@contentry.org",
-                            password: "johnwick"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -216,14 +203,10 @@ describe('GraphQL, Users', () => {
             });
             describe('surname field', () => {
                 it('empty', async () => {
+                    user.surname = '';
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "John",
-                            surname: "",
-                            email: "test@contentry.org",
-                            password: "johnwick"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -233,15 +216,10 @@ describe('GraphQL, Users', () => {
                     );
                 });
                 it('longer than 100 chars', async () => {
-                    const surname = _.repeat('a', 101);
+                    user.surname = _.repeat('a', 101);
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "John",
-                            surname: "${surname}",
-                            email: "test@contentry.org",
-                            password: "johnwick"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -253,14 +231,10 @@ describe('GraphQL, Users', () => {
             });
             describe('email field', () => {
                 it('empty', async () => {
+                    user.email = '';
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "John",
-                            surname: "Wick",
-                            email: "",
-                            password: "johnwick"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -270,14 +244,10 @@ describe('GraphQL, Users', () => {
                     );
                 });
                 it('not an email', async () => {
+                    user.email = 'thisisnotanemail';
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "John",
-                            surname: "Wick",
-                            email: "thisisnotanemail",
-                            password: "johnwick"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -289,15 +259,10 @@ describe('GraphQL, Users', () => {
             });
             describe('password field', () => {
                 it('shorter than 6 chars', async () => {
-                    const password = _.repeat('a', 5);
+                    user.password = _.repeat('a', 5);
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "John",
-                            surname: "Wick",
-                            email: "test@contentry.org",
-                            password: "${password}"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -307,15 +272,10 @@ describe('GraphQL, Users', () => {
                     );
                 });
                 it('longer than 50 chars', async () => {
-                    const password = _.repeat('a', 51);
+                    user.password = _.repeat('a', 51);
                     await assertQueryThrowsBadRequest(`
                         mutation {
-                          createUser(data: {
-                            firstName: "John",
-                            surname: "Wick",
-                            email: "test@contentry.org",
-                            password: "${password}"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname

@@ -6,7 +6,7 @@ import { AppModule } from '@app/app.module';
 import { User } from '@modules/users/entities';
 import { UsersService } from '@modules/users/users.service';
 import { UserRO } from '@modules/users/users.dto';
-import { makeGQLHelperMethods } from '../helpers';
+import { gqlStringify, makeGQLHelperMethods } from '../helpers';
 
 describe('GraphQL, Auth', () => {
     let app: INestApplication;
@@ -46,15 +46,22 @@ describe('GraphQL, Auth', () => {
     });
 
     describe('login()', () => {
+        const login: any = {
+            email: 'john.wick@contentry.org',
+            password: 'johnwick'
+        };
+
+        beforeEach(() => {
+            login.email = 'john.wick@contentry.org';
+            login.password = 'johnwick';
+        });
+
         it('should return JWT token on a successful login', async () => {
             const res = await prepareGQLRequest()
                 .send({
                     query: `
                         mutation {
-                            login(loginData: {
-                                email: "john.wick@contentry.org",
-                                password: "johnwick"
-                            }) {
+                            login(loginData: ${gqlStringify(login)}) {
                                 accessToken
                                 expiresIn
                             }
@@ -85,14 +92,12 @@ describe('GraphQL, Auth', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid email field', async () => {
+                login.email = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                         mutation {
-                            login(loginData: {
-                                email: 1,
-                                password: "johnwick"
-                            }) {
+                            login(loginData: ${gqlStringify(login)}) {
                                 accessToken
                                 expiresIn
                             }
@@ -101,14 +106,12 @@ describe('GraphQL, Auth', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid password field', async () => {
+                login.password = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                         mutation {
-                            login(loginData: {
-                                email: "john.wick@contentry.org",
-                                password: 1
-                            }) {
+                            login(loginData: ${gqlStringify(login)}) {
                                 accessToken
                                 expiresIn
                             }
@@ -118,12 +121,10 @@ describe('GraphQL, Auth', () => {
             });
         });
         it('should return fake 400 on a wrong login', async () => {
+            login.password = 'blah';
             await assertQueryThrowsBadRequest(`
                 mutation {
-                    login(loginData: {
-                        email: "john.wick@contentry.org",
-                        password: "blah"
-                    }) {
+                    login(loginData: ${gqlStringify(login)}) {
                         accessToken
                         expiresIn
                     }
