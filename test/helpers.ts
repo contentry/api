@@ -1,13 +1,18 @@
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
 
+// helps with serializing objects for GQL queries
+// JSON format = { "property": "value" }
+// this outputs the GQL syntax = { property: "value" } (including {})
+export const gqlStringify = (obj: object): string =>
+    JSON.stringify(obj).replace(/"([^(")"]+)":/g, '$1:');
+
 // GQL requests are always pointed at the same endpoint:
 // POST http://localhost:<port>/graphql
 // we get the URL from a INestApplication instance
 // therefore makeGQLHelperMethods is a factory method that takes the NestApplication instance
 // and generates methods that either prepares the GQL request (and possibly authenticate it)
 // or execute a given query and assert it to throw "fake" 40x responses, because the assertions seem to be always the same
-
 export const makeGQLHelperMethods = (app: INestApplication) => {
     const prepareGQLRequest = (accessToken?: string): request.Test => {
         const req = request(app.getHttpServer()).post('/graphql');

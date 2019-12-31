@@ -9,7 +9,7 @@ import { User as UserInterface } from '@modules/users/interfaces/user.interface'
 import { UsersService } from '@modules/users/users.service';
 import { constants } from '@utils/helpers/roles.helper';
 import { AuthService } from '@modules/auth/auth.service';
-import { makeGQLHelperMethods } from '../helpers';
+import { makeGQLHelperMethods, gqlStringify } from '../helpers';
 
 describe('GraphQL, Users', () => {
     let app: INestApplication;
@@ -49,23 +49,29 @@ describe('GraphQL, Users', () => {
     });
 
     describe('createUser()', () => {
-        it('should register a new user', async () => {
-            const user = {
+        let user: any = {
+            firstName: 'John',
+            surname: 'Wick',
+            email: 'test@contentry.org',
+            password: 'johnwick'
+        };
+
+        beforeEach(() => {
+            // reset the values
+            user = {
                 firstName: 'John',
                 surname: 'Wick',
                 email: 'test@contentry.org',
                 password: 'johnwick'
             };
+        });
+
+        it('should register a new user', async () => {
             const res = await prepareGQLRequest()
                 .send({
                     query: `
                         mutation {
-                          createUser(data: {
-                            firstName: "${user.firstName}",
-                            surname: "${user.surname}",
-                            email: "${user.email}",
-                            password: "${user.password}"
-                          }) {
+                          createUser(data: ${gqlStringify(user)}) {
                               id
                               firstName
                               surname
@@ -86,6 +92,8 @@ describe('GraphQL, Users', () => {
             });
         });
         describe('should return bad request or malformed GQL query', () => {
+
+
             // directly 400 status code
             it('invalid data object', async () => {
                 const res = await prepareGQLRequest()
@@ -103,16 +111,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid firstName', async () => {
+                data.firstName = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: {
-                                firstName: 1,
-                                surname: "Wick",
-                                email: "test@contentry.org",
-                                password: "johnwick"
-                              }) {
+                              createUser(data: ${gqlStringify(data)}) {
                                   id
                                   firstName
                                   surname
@@ -123,16 +127,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid surname', async () => {
+                data.surname = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: 1,
-                                email: "test@contentry.org",
-                                password: "johnwick"
-                              }) {
+                              createUser(data: ${gqlStringify(data)}) {
                                   id
                                   firstName
                                   surname
@@ -143,16 +143,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid email', async () => {
+                data.email = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "Wick",
-                                email: 1,
-                                password: "johnwick"
-                              }) {
+                              createUser(data: ${gqlStringify(data)}) {
                                   id
                                   firstName
                                   surname
@@ -163,16 +159,12 @@ describe('GraphQL, Users', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid password', async () => {
+                data.password = 1;
                 const res = await prepareGQLRequest()
                     .send({
                         query: `
                             mutation {
-                              createUser(data: {
-                                firstName: "John",
-                                surname: "Wick",
-                                email: "test@contentry.org",
-                                password: 1
-                              }) {
+                              createUser(data: ${gqlStringify(data)}) {
                                   id
                                   firstName
                                   surname
