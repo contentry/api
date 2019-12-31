@@ -6,12 +6,16 @@ import { AppModule } from '@app/app.module';
 import { User } from '@modules/users/entities';
 import { UsersService } from '@modules/users/users.service';
 import { UserRO } from '@modules/users/users.dto';
+import { makeGQLHelperMethods } from '../helpers';
 
 describe('GraphQL, Auth', () => {
     let app: INestApplication;
     let userRepository: Repository<User>;
     let usersService: UsersService;
     let existingUser: UserRO;
+
+    let assertQueryThrowsBadRequest: (query: string, accessToken?: string) => Promise<void>;
+    let prepareGQLRequest: (accessToken?: string) => request.Test;
 
     beforeEach(async () => {
         const module = await Test.createTestingModule({
@@ -29,6 +33,11 @@ describe('GraphQL, Auth', () => {
             email: 'john.wick@contentry.org',
             password: 'johnwick'
         });
+
+        ({
+            assertQueryThrowsBadRequest,
+            prepareGQLRequest
+        } = makeGQLHelperMethods(app));
     });
 
     afterEach(async () => {
@@ -38,8 +47,7 @@ describe('GraphQL, Auth', () => {
 
     describe('login()', () => {
         it('should return JWT token on a successful login', async () => {
-            const res = await request(app.getHttpServer())
-                .post('/graphql')
+            const res = await prepareGQLRequest()
                 .send({
                     query: `
                         mutation {
@@ -64,8 +72,7 @@ describe('GraphQL, Auth', () => {
         });
         describe('should return 400 on a malformed GQL query', () => {
             it('invalid loginData object', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                         mutation {
@@ -78,8 +85,7 @@ describe('GraphQL, Auth', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid email field', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                         mutation {
@@ -95,8 +101,7 @@ describe('GraphQL, Auth', () => {
                 expect(res.status).toEqual(400);
             });
             it('invalid password field', async () => {
-                const res = await request(app.getHttpServer())
-                    .post('/graphql')
+                const res = await prepareGQLRequest()
                     .send({
                         query: `
                         mutation {
@@ -113,23 +118,17 @@ describe('GraphQL, Auth', () => {
             });
         });
         it('should return fake 400 on a wrong login', async () => {
-            const res = await request(app.getHttpServer())
-                .post('/graphql')
-                .send({
-                    query: `
-                        mutation {
-                            login(loginData: {
-                                email: "john.wick@contentry.org",
-                                password: "blah"
-                            }) {
-                                accessToken
-                                expiresIn
-                            }
-                        }`
-                });
-            expect(res.status).toEqual(200);
-            expect(res.body.data).toBeNull();
-            expect(res.body.errors[0].message.statusCode).toEqual(400);
+            await assertQueryThrowsBadRequest(`
+                mutation {
+                    login(loginData: {
+                        email: "john.wick@contentry.org",
+                        password: "blah"
+                    }) {
+                        accessToken
+                        expiresIn
+                    }
+                }`
+            );
         });
     });
 });
