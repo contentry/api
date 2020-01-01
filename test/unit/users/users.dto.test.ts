@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import * as _ from 'lodash';
 import { validateOrReject } from 'class-validator';
+
 import { CreateUserDTO, UpdateUserDTO } from '@modules/users/users.dto';
 
 describe('User (input) DTOs', () => {

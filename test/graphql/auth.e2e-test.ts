@@ -2,9 +2,10 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { getRepository, Repository } from 'typeorm';
+
 import { AppModule } from '@app/app.module';
-import { User } from '@modules/users/entities';
 import { UsersService } from '@modules/users/users.service';
+import { User } from '@modules/users/entities';
 import { UserRO } from '@modules/users/users.dto';
 import { gqlStringify, makeGQLHelperMethods } from '../helpers';
 

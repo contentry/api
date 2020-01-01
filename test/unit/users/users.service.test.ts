@@ -1,7 +1,7 @@
-import * as _ from 'lodash';
 import { BadRequestException, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import * as _ from 'lodash';
 
 import { UsersService } from '@modules/users/users.service';
 import { RolesService } from '@modules/roles/roles.service';

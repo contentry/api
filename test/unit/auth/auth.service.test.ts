@@ -1,11 +1,11 @@
 import { BadRequestException, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
 
 import { UsersService } from '@modules/users/users.service';
+import { AuthService } from '@modules/auth/auth.service';
 import { User } from '@modules/users/entities';
 import { User as UserInterface } from '@modules/users/interfaces/user.interface';
-import { AuthService } from '@modules/auth/auth.service';
-import { JwtService } from '@nestjs/jwt';
 import { PasswordsHelper } from '@utils/helpers/passwords.helper';
 
 describe('AuthService', () => {

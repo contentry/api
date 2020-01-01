@@ -1,23 +1,24 @@
 import { INestApplication, UseGuards } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { GraphQLModule, Query, Resolver } from '@nestjs/graphql';
-import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
-import { getRepository, Repository } from 'typeorm';
-import { User } from '@modules/users/entities';
-import { UsersService } from '@modules/users/users.service';
-import { AuthService } from '@modules/auth/auth.service';
-import { User as UserInterface } from '@modules/users/interfaces/user.interface';
-import { makeGQLHelperMethods } from '../../helpers';
-import * as supertest from 'supertest';
-import { RolesGuard } from '@modules/roles/guards/roles.guard';
-import { Roles } from '@modules/roles/roles.decorator';
-import { constants } from '@utils/helpers/roles.helper';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { getRepository, Repository } from 'typeorm';
+import * as supertest from 'supertest';
+
 import { AuthModule } from '@modules/auth/auth.module';
 import { UsersModule } from '@modules/users/users.module';
 import { RolesModule } from '@modules/roles/roles.module';
 import { AuthResolver } from '@modules/auth/auth.resolver';
 import { UsersResolver } from '@modules/users/users.resolver';
+import { UsersService } from '@modules/users/users.service';
+import { AuthService } from '@modules/auth/auth.service';
+import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
+import { RolesGuard } from '@modules/roles/guards/roles.guard';
+import { Roles } from '@modules/roles/roles.decorator';
+import { User } from '@modules/users/entities';
+import { User as UserInterface } from '@modules/users/interfaces/user.interface';
+import { constants } from '@utils/helpers/roles.helper';
+import { makeGQLHelperMethods } from '../../helpers';
 
 @Resolver()
 class TestResolver {
