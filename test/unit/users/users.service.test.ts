@@ -19,11 +19,6 @@ describe('UsersService', () => {
     const adminRole = new Role('admin');
     adminRole.id = 2;
 
-    const roles = {
-        user: userRole,
-        admin: adminRole
-    };
-
     // mocked methods get reset before every test, this is more like an interface
     const mockUserRepository = {
         save: jest.fn(),
@@ -67,9 +62,7 @@ describe('UsersService', () => {
         });
 
         it('should create user with USER role', async () => {
-            const userRepositorySaveArgs: User[] = [];
             mockUserRepository.save = jest.fn((x: User) => {
-                userRepositorySaveArgs.push(_.cloneDeep(x));
                 // mock the saving itself - setting the object's ID
                 if (!x.id) {
                     x.id = id;
@@ -85,14 +78,7 @@ describe('UsersService', () => {
                 password: 'johnwick'
             };
 
-            // after assigning hash password
-            const expectedFirstUser = {
-                ...inputUser,
-                password: expect.any(String)
-            };
-
-            // after assigning roles (ID is assigned in first save)
-            const expectedSecondUser = {
+            const expectedUser = {
                 ...inputUser,
                 id: 1,
                 password: expect.any(String),
@@ -101,14 +87,9 @@ describe('UsersService', () => {
 
             await usersService.create(inputUser);
 
-            expect(mockUserRepository.save).toHaveBeenCalledTimes(2);
-            // since in save(), the argument is mutated, spy.mock.calls point in both calls to the same object
-            // = it shows them as they were in the last call - that's the reason for deep cloning the arguments in save() mock
-            expect(userRepositorySaveArgs[0]).toEqual(expectedFirstUser);
-            expect(userRepositorySaveArgs[1]).toEqual(expectedSecondUser);
+            expect(mockUserRepository.save).toHaveBeenCalledWith(expectedUser);
         });
-
-        it('should return created user without password', async () => {
+        it('should create and return a user with USER role without password', async () => {
             mockUserRepository.save = jest.fn((x: User) => {
                 // mock the saving itself - setting the object's ID
                 if (!x.id) {
@@ -124,16 +105,17 @@ describe('UsersService', () => {
                 email: 'john.wick@contentry.org',
                 password: 'johnwick'
             };
-            const expected = {
+
+            const expectedUser = {
                 ...inputUser,
                 id: 1,
                 roles: [userRole]
             };
-            delete expected.password;
 
-            const result: UserRO = await usersService.create(inputUser);
+            const result = await usersService.create(inputUser);
 
-            expect(result).toEqual(expected);
+            delete expectedUser.password;
+            expect(result).toEqual(expectedUser);
         });
     });
 
@@ -160,7 +142,6 @@ describe('UsersService', () => {
 
             const result: UserRO[] = await usersService.findAll();
 
-            expect(mockUserRepository.find).toBeCalledTimes(1);
             expect(result).toHaveLength(2);
             expect(result).toContainEqual({
                 id: 1,
@@ -205,10 +186,6 @@ describe('UsersService', () => {
 
             const result: UserRO = await usersService.findByID(1);
 
-            expect(mockUserRepository.findOne).toBeCalledWith({
-                where: { id: 1 },
-                relations: ['roles']
-            });
             expect(result).toEqual({
                 id: 1,
                 firstName: 'John',
@@ -221,10 +198,6 @@ describe('UsersService', () => {
             mockUserRepository.findOne = jest.fn(() => null);
 
             await expect(usersService.findByID(1)).rejects.toThrow(BadRequestException);
-            expect(mockUserRepository.findOne).toBeCalledWith({
-                where: { id: 1 },
-                relations: ['roles']
-            });
         });
     });
 
@@ -243,10 +216,6 @@ describe('UsersService', () => {
                 mockUserRepository.findOne = jest.fn(() => john);
 
                 const result = await usersService.findByEmail('john.wick@contentry.org', true);
-                expect(mockUserRepository.findOne).toBeCalledWith({
-                    where: { email: 'john.wick@contentry.org' },
-                    relations: ['roles']
-                });
                 expect(result).toEqual({
                     id: 1,
                     firstName: 'John',
@@ -260,10 +229,6 @@ describe('UsersService', () => {
                 mockUserRepository.findOne = jest.fn(() => john);
 
                 const result = await usersService.findByEmail('john.wick@contentry.org', false);
-                expect(mockUserRepository.findOne).toBeCalledWith({
-                    where: { email: 'john.wick@contentry.org' },
-                    relations: ['roles']
-                });
                 expect(result).toEqual({
                     id: 1,
                     firstName: 'John',
@@ -276,10 +241,6 @@ describe('UsersService', () => {
                 mockUserRepository.findOne = jest.fn(() => john);
 
                 const result = await usersService.findByEmail('john.wick@contentry.org');
-                expect(mockUserRepository.findOne).toBeCalledWith({
-                    where: { email: 'john.wick@contentry.org' },
-                    relations: ['roles']
-                });
                 expect(result).toEqual({
                     id: 1,
                     firstName: 'John',
@@ -295,10 +256,6 @@ describe('UsersService', () => {
             const user = await usersService.findByEmail('john.wick@contentry.org');
 
             expect(user).toBeNull();
-            expect(mockUserRepository.findOne).toBeCalledWith({
-                where: { email: 'john.wick@contentry.org' },
-                relations: ['roles']
-            });
         });
     });
 
@@ -323,10 +280,6 @@ describe('UsersService', () => {
             };
             await usersService.updateUser(1, data);
 
-            expect(mockUserRepository.findOne).toBeCalledWith({
-                where: { id: 1 },
-                relations: ['roles']
-            });
             expect(mockUserRepository.save).toBeCalledWith({
                 id: 1,
                 firstName: 'Jack',
@@ -370,10 +323,6 @@ describe('UsersService', () => {
             mockUserRepository.findOne = jest.fn(() => null);
 
             await expect(usersService.updateUser(1, {})).rejects.toThrow(BadRequestException);
-            expect(mockUserRepository.findOne).toBeCalledWith({
-                where: { id: 1 },
-                relations: ['roles']
-            });
             expect(mockUserRepository.save).not.toHaveBeenCalled();
         });
     });
@@ -392,10 +341,6 @@ describe('UsersService', () => {
 
             const result = await usersService.deleteUser(1);
 
-            expect(mockUserRepository.findOne).toBeCalledWith({
-                where: { id: 1 },
-                relations: ['roles']
-            });
             expect(mockUserRepository.remove).toBeCalledWith({
                 id: 1,
                 firstName: 'John',
@@ -410,10 +355,6 @@ describe('UsersService', () => {
             mockUserRepository.findOne = jest.fn(() => null);
 
             await expect(usersService.deleteUser(1)).rejects.toThrow(BadRequestException);
-            expect(mockUserRepository.findOne).toBeCalledWith({
-                where: { id: 1 },
-                relations: ['roles']
-            });
             expect(mockUserRepository.remove).not.toHaveBeenCalled();
         });
     });
@@ -421,7 +362,7 @@ describe('UsersService', () => {
     describe('assignRole()', () => {
         describe('should assign role/s to user', () => {
             it('single role', async () => {
-                mockRolesService.findByName = jest.fn(roleName => [roles[roleName]]);
+                mockRolesService.findByName = jest.fn(roleName => [adminRole]);
 
                 const john = new User({
                     id: 1,
@@ -467,7 +408,7 @@ describe('UsersService', () => {
                 });
             });
             it('if he doesn\'t have the property', async () => {
-                mockRolesService.findByName = jest.fn(roleName => [roles[roleName]]);
+                mockRolesService.findByName = jest.fn(roleName => [adminRole]);
 
                 const johnWithoutRoles = new User({
                     id: 1,
@@ -493,7 +434,7 @@ describe('UsersService', () => {
         });
         describe('should throw a bad request exception', () => {
             it('if single role doesn\'t exist', async () => {
-                mockRolesService.findByName = jest.fn(() => null);
+                mockRolesService.findByName = jest.fn(() => []);
 
                 const john = new User({
                     id: 1,
@@ -509,7 +450,7 @@ describe('UsersService', () => {
                 expect(mockUserRepository.save).not.toHaveBeenCalled();
             });
             it('if multiple roles don\'t exist', async () => {
-                mockRolesService.findByName = jest.fn(() => null);
+                mockRolesService.findByName = jest.fn(() => []);
 
                 const john = new User({
                     id: 1,
