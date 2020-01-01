@@ -1,7 +1,6 @@
 import { INestApplication, UseGuards } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { Query, Resolver } from '@nestjs/graphql';
-import { APP_GUARD } from '@nestjs/core';
+import { GraphQLModule, Query, Resolver } from '@nestjs/graphql';
 import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
 import { getRepository, Repository } from 'typeorm';
 import { User } from '@modules/users/entities';
@@ -10,10 +9,15 @@ import { AuthService } from '@modules/auth/auth.service';
 import { User as UserInterface } from '@modules/users/interfaces/user.interface';
 import { makeGQLHelperMethods } from '../../helpers';
 import * as supertest from 'supertest';
-import { AppModule } from '@app/app.module';
 import { RolesGuard } from '@modules/roles/guards/roles.guard';
 import { Roles } from '@modules/roles/roles.decorator';
 import { constants } from '@utils/helpers/roles.helper';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '@modules/auth/auth.module';
+import { UsersModule } from '@modules/users/users.module';
+import { RolesModule } from '@modules/roles/roles.module';
+import { AuthResolver } from '@modules/auth/auth.resolver';
+import { UsersResolver } from '@modules/users/users.resolver';
 
 @Resolver()
 class TestResolver {
@@ -50,12 +54,25 @@ describe('RolesGuard', () => {
     let prepareGQLRequest: (accessToken?: string) => supertest.Test;
 
     beforeEach(async () => {
-        // essentially E2E test on the entire app but with added dummy query which is protected by GqlAuthGuard AND RolesGuard (with @Roles('admin'))
+        // essentially E2E test on the entire app but with mock schema and resolver
         // I haven't been able to make a completely dummy app and this works
         const module = await Test.createTestingModule({
-            imports: [AppModule],
+            imports: [
+                TypeOrmModule.forRoot(),
+                AuthModule,
+                UsersModule,
+                RolesModule,
+                GraphQLModule.forRoot({
+                    typeDefs: 'type Query { test: Boolean! }',
+                    debug: true,
+                    context: ({ req }) => ({ req })
+                })
+            ],
             providers: [TestResolver]
-        }).compile();
+        })
+            .overrideProvider(AuthResolver).useValue({})
+            .overrideProvider(UsersResolver).useValue({})
+            .compile();
         app = module.createNestApplication();
         await app.init();
 

@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { Query, Resolver } from '@nestjs/graphql';
+import { GraphQLModule, Query, Resolver } from '@nestjs/graphql';
 import { APP_GUARD } from '@nestjs/core';
 import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
 import { getRepository, Repository } from 'typeorm';
@@ -10,7 +10,12 @@ import { AuthService } from '@modules/auth/auth.service';
 import { User as UserInterface } from '@modules/users/interfaces/user.interface';
 import { makeGQLHelperMethods } from '../../helpers';
 import * as supertest from 'supertest';
-import { AppModule } from '@app/app.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '@modules/auth/auth.module';
+import { UsersModule } from '@modules/users/users.module';
+import { RolesModule } from '@modules/roles/roles.module';
+import { AuthResolver } from '@modules/auth/auth.resolver';
+import { UsersResolver } from '@modules/users/users.resolver';
 
 @Resolver()
 class TestResolver {
@@ -37,10 +42,20 @@ describe('GqlAuthGuard', () => {
     let prepareGQLRequest: (accessToken?: string) => supertest.Test;
 
     beforeEach(async () => {
-        // essentially E2E test on the entire app but with added dummy query and GLOBALLY applied GqlAuthGuard (to make sure the query is guarded)
+        // essentially E2E test on the entire app but with mock schema and resolver and GLOBALLY applied GqlAuthGuard (to make sure the query is guarded)
         // I haven't been able to make a completely dummy app and this works
         const module = await Test.createTestingModule({
-            imports: [AppModule],
+            imports: [
+                TypeOrmModule.forRoot(),
+                AuthModule,
+                UsersModule,
+                RolesModule,
+                GraphQLModule.forRoot({
+                    typeDefs: 'type Query { test: Boolean! }',
+                    debug: true,
+                    context: ({ req }) => ({ req })
+                })
+            ],
             providers: [
                 TestResolver,
                 {
@@ -48,7 +63,10 @@ describe('GqlAuthGuard', () => {
                     useClass: GqlAuthGuard
                 }
             ]
-        }).compile();
+        })
+            .overrideProvider(AuthResolver).useValue({})
+            .overrideProvider(UsersResolver).useValue({})
+            .compile();
         app = module.createNestApplication();
         await app.init();
 
