@@ -19,6 +19,15 @@ export class CreateUserDTO {
     @Field(type => String)
     @Length(6, 50)
     readonly password: string;
+
+    constructor(data: {
+        firstName: string,
+        surname: string,
+        email: string,
+        password: string
+    }) {
+        Object.assign(this, data);
+    }
 }
 
 @InputType()
@@ -37,6 +46,14 @@ export class UpdateUserDTO {
     @IsEmail()
     @IsOptional()
     readonly email?: string;
+
+    constructor(data: {
+        firstName?: string,
+        surname?: string,
+        email?: string
+    }) {
+        Object.assign(this, data);
+    }
 }
 
 @ObjectType()
