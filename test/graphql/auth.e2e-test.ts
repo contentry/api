@@ -77,50 +77,20 @@ describe('GraphQL, Auth', () => {
                 }
             });
         });
-        describe('should return 400 on a malformed GQL query', () => {
-            it('invalid loginData object', async () => {
-                const res = await prepareGQLRequest()
-                    .send({
-                        query: `
-                        mutation {
-                            login(loginData: 1) {
-                                accessToken
-                                expiresIn
-                            }
-                        }`
-                    });
-                expect(res.status).toEqual(400);
-            });
-            it('invalid email field', async () => {
-                login.email = 1;
-                const res = await prepareGQLRequest()
-                    .send({
-                        query: `
-                        mutation {
-                            login(loginData: ${gqlStringify(login)}) {
-                                accessToken
-                                expiresIn
-                            }
-                        }`
-                    });
-                expect(res.status).toEqual(400);
-            });
-            it('invalid password field', async () => {
-                login.password = 1;
-                const res = await prepareGQLRequest()
-                    .send({
-                        query: `
-                        mutation {
-                            login(loginData: ${gqlStringify(login)}) {
-                                accessToken
-                                expiresIn
-                            }
-                        }`
-                    });
-                expect(res.status).toEqual(400);
-            });
+        it('should return real 400 Bad Request on a malformed GQL query', async () => {
+            const res = await prepareGQLRequest()
+                .send({
+                    query: `
+                    mutation {
+                        login(loginData: 1) {
+                            accessToken
+                            expiresIn
+                        }
+                    }`
+                });
+            expect(res.status).toEqual(400);
         });
-        it('should return fake 400 on a wrong login', async () => {
+        it('should return fake 400 Bad Request on a wrong login', async () => {
             login.password = 'blah';
             await assertQueryThrowsBadRequest(`
                 mutation {
