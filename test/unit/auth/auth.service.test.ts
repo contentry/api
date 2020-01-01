@@ -45,40 +45,41 @@ describe('AuthService', () => {
     });
 
     describe('login()', () => {
-        it('throws bad request exception if credentials are wrong', async () => {
-            mockUsersService.findByEmail = jest.fn(() => null);
-            const spyFindByEmailAndPass = jest.spyOn(authService, 'findByEmailAndPass');
+        describe('throws bad request exception if credentials are wrong', () => {
+            it('user doesn\'t exist', async () => {
+                mockUsersService.findByEmail = jest.fn(() => null);
 
-            const user: UserInterface = {
-                email: 'john.wick@contentry.org',
-                password: 'johnwick'
-            };
+                const user: UserInterface = {
+                    email: 'john.wick@contentry.org',
+                    password: 'johnwick'
+                };
 
-            await expect(authService.login(user)).rejects.toThrow(BadRequestException);
-            expect(spyFindByEmailAndPass).toHaveBeenCalledWith({
-                email: 'john.wick@contentry.org',
-                password: 'johnwick'
+                await expect(authService.login(user)).rejects.toThrow(BadRequestException);
             });
-            expect(mockUsersService.findByEmail).toHaveBeenCalledWith('john.wick@contentry.org', true);
-            expect(mockJwtService.sign).not.toHaveBeenCalled();
+            it('user exists but password is wrong', async () => {
+                // mock to return non-null user
+                mockUsersService.findByEmail = jest.fn(() => new User({}));
+                // mock to return false password compare result
+                const originalPasswordCompare = PasswordsHelper.compare;
+                PasswordsHelper.compare = jest.fn(() => Promise.resolve(false));
+
+                const user: UserInterface = {
+                    email: 'john.wick@contentry.org',
+                    password: 'johnwick'
+                };
+
+                await expect(authService.login(user)).rejects.toThrow(BadRequestException);
+
+                PasswordsHelper.compare = originalPasswordCompare;
+            });
         });
         it('returns access token and expiration time if credentials are correct', async () => {
-            const existingUser = new User({
-                id: 1,
-                firstName: 'John',
-                surname: 'Wick',
-                email: 'john.wick@contentry.org',
-                password: 'johnwick'
-            });
-            mockUsersService.findByEmail = jest.fn(() => existingUser);
+            mockUsersService.findByEmail = jest.fn(() => new User({}));
 
             mockJwtService.sign = jest.fn(() => 'token');
 
             const originalPasswordCompare = PasswordsHelper.compare;
-            const mockPasswordCompare = jest.fn(() => Promise.resolve(true));
-            PasswordsHelper.compare = mockPasswordCompare;
-
-            const spyFindByEmailAndPass = jest.spyOn(authService, 'findByEmailAndPass');
+            PasswordsHelper.compare = jest.fn(() => Promise.resolve(true));
 
             const user: UserInterface = {
                 email: 'john.wick@contentry.org',
@@ -91,18 +92,6 @@ describe('AuthService', () => {
                 accessToken: 'token',
                 expiresIn: 3600
             });
-            expect(spyFindByEmailAndPass).toHaveBeenCalledWith({
-                email: 'john.wick@contentry.org',
-                password: 'johnwick'
-            });
-            expect(mockUsersService.findByEmail).toHaveBeenCalledWith('john.wick@contentry.org', true);
-            expect(mockPasswordCompare).toHaveBeenCalledWith('johnwick', existingUser.password);
-            expect(mockJwtService.sign).toHaveBeenCalledWith({
-                id: 1,
-                firstName: 'John',
-                surname: 'Wick',
-                email: 'john.wick@contentry.org'
-            });
 
             PasswordsHelper.compare = originalPasswordCompare;
         });
@@ -112,8 +101,6 @@ describe('AuthService', () => {
         it('returns null if user doesn\'t exist', async () => {
             mockUsersService.findByEmail = jest.fn(() => null);
 
-            const spyPasswordsHelperCompare = jest.spyOn(PasswordsHelper, 'compare');
-
             const user: UserInterface = {
                 email: 'john.wick@contentry.org',
                 password: 'johnwick'
@@ -122,17 +109,12 @@ describe('AuthService', () => {
             const result = await authService.findByEmailAndPass(user);
 
             expect(result).toBeNull();
-            expect(spyPasswordsHelperCompare).not.toHaveBeenCalled();
         });
         it('returns null if password doesn\'t match', async () => {
-            const mockUser = new User({
-                password: 'babayaga'
-            });
-            mockUsersService.findByEmail = jest.fn(() => mockUser);
+            mockUsersService.findByEmail = jest.fn(() => new User({}));
 
             const originalPasswordCompare = PasswordsHelper.compare;
-            const mockPasswordCompare = jest.fn(() => Promise.resolve(false));
-            PasswordsHelper.compare = mockPasswordCompare;
+            PasswordsHelper.compare = jest.fn(() => Promise.resolve(false));
 
             const user: UserInterface = {
                 email: 'john.wick@contentry.org',
@@ -142,7 +124,6 @@ describe('AuthService', () => {
             const result = await authService.findByEmailAndPass(user);
 
             expect(result).toBeNull();
-            expect(mockPasswordCompare).toHaveBeenCalledWith('johnwick', mockUser.password);
             PasswordsHelper.compare = originalPasswordCompare;
         });
         it('returns user if he exists and a correct password is provided', async () => {
@@ -156,8 +137,7 @@ describe('AuthService', () => {
             mockUsersService.findByEmail = jest.fn(() => existingUser);
 
             const originalPasswordCompare = PasswordsHelper.compare;
-            const mockPasswordCompare = jest.fn(() => Promise.resolve(true));
-            PasswordsHelper.compare = mockPasswordCompare;
+            PasswordsHelper.compare = jest.fn(() => Promise.resolve(true));
 
             const user: UserInterface = {
                 email: 'john.wick@contentry.org',
@@ -173,7 +153,6 @@ describe('AuthService', () => {
                 email: 'john.wick@contentry.org',
                 password: 'johnwick'
             });
-            expect(mockPasswordCompare).toHaveBeenCalledWith('johnwick', existingUser.password);
             PasswordsHelper.compare = originalPasswordCompare;
         });
     });
@@ -182,10 +161,10 @@ describe('AuthService', () => {
         it('returns user if the payload email is his', async () => {
             const email = 'john.wick@contentry.org';
             const expectedUser = new User({
+                email,
                 id: 1,
                 firstName: 'John',
-                surname: 'Wick',
-                email: 'john.wick@contentry.org'
+                surname: 'Wick'
             });
             mockUsersService.findByEmail = jest.fn(() => expectedUser);
 
