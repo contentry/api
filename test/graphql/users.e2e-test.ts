@@ -58,11 +58,8 @@ describe('GraphQL, Users', () => {
             };
 
             beforeEach(() => {
-                // reset the values
+                // reset the values - only firstName is changed in validation error test
                 user.firstName = 'John';
-                user.surname = 'Wick';
-                user.email = 'test@contentry.org';
-                user.password = 'johnwick';
             });
 
             it('should register a new user and return it', async () => {
@@ -114,14 +111,14 @@ describe('GraphQL, Users', () => {
                 // e.g. firstName field must not be empty
                 user.firstName = '';
                 await assertQueryThrowsBadRequest(`
-                mutation {
-                  createUser(data: ${gqlStringify(user)}) {
-                      id
-                      firstName
-                      surname
-                      email
-                  }
-                }`
+                    mutation {
+                        createUser(data: ${gqlStringify(user)}) {
+                            id
+                            firstName
+                            surname
+                            email
+                        }
+                    }`
                 );
             });
         });
@@ -146,11 +143,11 @@ describe('GraphQL, Users', () => {
             delete carlInfo.id;
             delete johnInfo.id;
             // Carl - just a user
-            await usersService.create({ ...carlInfo });
+            await usersService.create(carlInfo);
             let createdUser = await usersService.findByEmail(carlInfo.email);
             carlInfo.id = createdUser.id;
             // John - user and admin
-            await usersService.create({ ...johnInfo });
+            await usersService.create(johnInfo);
             createdUser = await usersService.findByEmail(johnInfo.email, true);
             johnInfo.id = createdUser.id;
             await usersService.assignRole(createdUser, constants.ADMIN);
@@ -454,9 +451,8 @@ describe('GraphQL, Users', () => {
                     }`;
 
                 beforeEach(() => {
+                    // again, only first name is changed
                     data.firstName = 'Baba';
-                    data.surname = 'Yaga';
-                    data.email = 'baba.yaga@contentry.org';
                 });
 
                 it('should throw real 400 Bad Request if GQL query is malformed', async () => {

@@ -72,9 +72,7 @@ describe('User (input) DTOs', () => {
         });
         describe('email', () => {
             it('can\'t be empty', async () => {
-                const valid = new CreateUserDTO({
-                    ...passingObject
-                });
+                const valid = new CreateUserDTO(passingObject);
                 const invalid = new CreateUserDTO({
                     ...passingObject,
                     email: ''
@@ -84,9 +82,7 @@ describe('User (input) DTOs', () => {
                 await expect(validateOrReject(invalid)).rejects.toHaveLength(1);
             });
             it('must be an email', async () => {
-                const valid = new CreateUserDTO({
-                    ...passingObject
-                });
+                const valid = new CreateUserDTO(passingObject);
                 const invalid = new CreateUserDTO({
                     ...passingObject,
                     email: 'thisIsNotAnEmail'
@@ -214,9 +210,7 @@ describe('User (input) DTOs', () => {
                 await expect(validateOrReject(valid)).resolves;
             });
             it('can\'t be empty', async () => {
-                const valid = new UpdateUserDTO({
-                    ...passingObject
-                });
+                const valid = new UpdateUserDTO(passingObject);
                 const invalid = new UpdateUserDTO({
                     ...passingObject,
                     email: ''
@@ -226,9 +220,7 @@ describe('User (input) DTOs', () => {
                 await expect(validateOrReject(invalid)).rejects.toHaveLength(1);
             });
             it('must be an email', async () => {
-                const valid = new UpdateUserDTO({
-                    ...passingObject
-                });
+                const valid = new UpdateUserDTO(passingObject);
                 const invalid = new UpdateUserDTO({
                     ...passingObject,
                     email: 'thisIsNotAnEmail'

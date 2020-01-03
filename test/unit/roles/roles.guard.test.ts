@@ -88,8 +88,8 @@ describe('RolesGuard', () => {
         authService = module.get(AuthService);
 
         // create a user
-        await usersService.create({ ...carlInfo });
-        await usersService.create({ ...johnInfo });
+        await usersService.create(carlInfo);
+        await usersService.create(johnInfo);
         const createdUser = await usersService.findByEmail(johnInfo.email, true);
         await usersService.assignRole(createdUser, constants.ADMIN);
     });

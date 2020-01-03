@@ -81,7 +81,7 @@ describe('GqlAuthGuard', () => {
         authService = module.get(AuthService);
 
         // create a user
-        await usersService.create({ ...userInfo });
+        await usersService.create(userInfo);
     });
 
     afterEach(async () => {
