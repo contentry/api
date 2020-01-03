@@ -1,7 +1,7 @@
 import { Field, InputType } from 'type-graphql';
 
 @InputType()
-export class LoginDTO {
+export class LoginIO {
     @Field(type => String)
     readonly email: string;
     @Field(type => String)

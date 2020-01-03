@@ -7,7 +7,7 @@ import { AppModule } from '@app/app.module';
 import { AuthService } from '@modules/auth/auth.service';
 import { UsersService } from '@modules/users/users.service';
 import { User } from '@modules/users/entities';
-import { User as UserInterface } from '@modules/users/interfaces/user.interface';
+import { User as UserInterface } from '@modules/users/interfaces';
 import { constants } from '@utils/helpers/roles.helper';
 import { makeGQLHelperMethods, gqlStringify } from '@test/helpers';
 

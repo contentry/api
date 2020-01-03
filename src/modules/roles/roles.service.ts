@@ -1,8 +1,5 @@
 import * as _ from 'lodash';
-import {
-    Injectable,
-    InternalServerErrorException
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './entities';

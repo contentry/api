@@ -7,8 +7,8 @@ import { UsersService } from '@modules/users/users.service';
 import { RolesService } from '@modules/roles/roles.service';
 import { User } from '@modules/users/entities';
 import { Role } from '@modules/roles/entities';
-import { UserRO } from '@modules/users/users.dto';
-import { User as UserInterface } from '@modules/users/interfaces/user.interface';
+import { UserRO } from '@modules/users/dto';
+import { User as UserInterface } from '@modules/users/interfaces';
 
 describe('UsersService', () => {
     let app: INestApplication;

@@ -13,9 +13,9 @@ import { AuthResolver } from '@modules/auth/auth.resolver';
 import { UsersResolver } from '@modules/users/users.resolver';
 import { UsersService } from '@modules/users/users.service';
 import { AuthService } from '@modules/auth/auth.service';
-import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
+import { GqlAuthGuard } from '@modules/auth/guards';
 import { User } from '@modules/users/entities';
-import { User as UserInterface } from '@modules/users/interfaces/user.interface';
+import { User as UserInterface } from '@modules/users/interfaces';
 import { makeGQLHelperMethods } from '@test/helpers';
 
 @Resolver()

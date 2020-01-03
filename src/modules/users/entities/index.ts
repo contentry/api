@@ -1,5 +1,1 @@
-import { User } from './user.entity';
-
-export {
-    User
-};
+export * from './user.entity';
