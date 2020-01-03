@@ -13,6 +13,7 @@
             "@modules/*": ["modules/*"],
             "@utils/*": ["utils/*"],
             "@helpers/*": ["helpers/*"],
+            "@test/*": ["../test/*"],
             "@app/*": ["./*"]
         },
         "incremental": true
