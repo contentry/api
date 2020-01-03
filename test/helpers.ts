@@ -1,9 +1,27 @@
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
 
-// helps with serializing objects for GQL queries
-// JSON format = { "property": "value" }
-// this outputs the GQL syntax = { property: "value" } (including {})
+/*
+    helps with serializing objects for GQL queries
+    GQL uses slightly different syntax for object
+    whereas JSON outputs object string like "{ "property": "value" }"
+    GQL requires objects to be specified without quotations around property names, like
+
+    query {
+       something(data: {
+            property: "value"
+        })
+    }
+
+    this helper method takes the JSON stringified object and removes quotations around properties
+    => usage:
+        const res = await prepareGQLRequest()
+            .send({ query:
+                `query {
+                    something(data: ${gqlStringify(obj)}
+                }`
+            });
+ */
 export const gqlStringify = (obj: object): string =>
     JSON.stringify(obj).replace(/"([^(")"]+)":/g, '$1:');
 

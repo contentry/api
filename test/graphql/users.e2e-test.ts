@@ -9,7 +9,7 @@ import { UsersService } from '@modules/users/users.service';
 import { User } from '@modules/users/entities';
 import { User as UserInterface } from '@modules/users/interfaces/user.interface';
 import { constants } from '@utils/helpers/roles.helper';
-import { makeGQLHelperMethods, gqlStringify } from '../helpers';
+import { makeGQLHelperMethods, gqlStringify } from '@test/helpers';
 
 describe('GraphQL, Users', () => {
     let app: INestApplication;

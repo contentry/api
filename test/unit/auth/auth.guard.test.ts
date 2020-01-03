@@ -16,7 +16,7 @@ import { AuthService } from '@modules/auth/auth.service';
 import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
 import { User } from '@modules/users/entities';
 import { User as UserInterface } from '@modules/users/interfaces/user.interface';
-import { makeGQLHelperMethods } from '../../helpers';
+import { makeGQLHelperMethods } from '@test/helpers';
 
 @Resolver()
 class TestResolver {

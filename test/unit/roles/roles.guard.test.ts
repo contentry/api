@@ -18,7 +18,7 @@ import { Roles } from '@modules/roles/roles.decorator';
 import { User } from '@modules/users/entities';
 import { User as UserInterface } from '@modules/users/interfaces/user.interface';
 import { constants } from '@utils/helpers/roles.helper';
-import { makeGQLHelperMethods } from '../../helpers';
+import { makeGQLHelperMethods } from '@test/helpers';
 
 @Resolver()
 class TestResolver {

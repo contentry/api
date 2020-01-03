@@ -6,14 +6,12 @@ import { getRepository, Repository } from 'typeorm';
 import { AppModule } from '@app/app.module';
 import { UsersService } from '@modules/users/users.service';
 import { User } from '@modules/users/entities';
-import { UserRO } from '@modules/users/users.dto';
-import { gqlStringify, makeGQLHelperMethods } from '../helpers';
+import { gqlStringify, makeGQLHelperMethods } from '@test/helpers';
 
 describe('GraphQL, Auth', () => {
     let app: INestApplication;
     let userRepository: Repository<User>;
     let usersService: UsersService;
-    let existingUser: UserRO;
 
     let assertQueryThrowsBadRequest: (query: string, accessToken?: string) => Promise<void>;
     let prepareGQLRequest: (accessToken?: string) => request.Test;
@@ -28,7 +26,7 @@ describe('GraphQL, Auth', () => {
         usersService = module.get(UsersService);
 
         // ensure a user exists
-        existingUser = await usersService.create({
+        await usersService.create({
             firstName: 'John',
             surname: 'Wick',
             email: 'john.wick@contentry.org',
