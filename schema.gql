@@ -3,14 +3,14 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
-input CreateUserDTO {
+input CreateUserIO {
   firstName: String!
   surname: String!
   email: String!
   password: String!
 }
 
-input LoginDTO {
+input LoginIO {
   email: String!
   password: String!
 }
@@ -21,11 +21,11 @@ type LoginRO {
 }
 
 type Mutation {
-  createUser(data: CreateUserDTO!): UserRO!
-  updateCurrentUser(data: UpdateUserDTO!): UserRO!
-  updateUser(data: UpdateUserDTO!, id: Float!): UserRO!
+  createUser(data: CreateUserIO!): UserRO!
+  updateCurrentUser(data: UpdateUserIO!): UserRO!
+  updateUser(data: UpdateUserIO!, id: Float!): UserRO!
   deleteUser(id: Float!): Boolean!
-  login(loginData: LoginDTO!): LoginRO!
+  login(loginData: LoginIO!): LoginRO!
   logout: Boolean!
 }
 
@@ -40,7 +40,7 @@ type RoleRO {
   name: String!
 }
 
-input UpdateUserDTO {
+input UpdateUserIO {
   firstName: String
   surname: String
   email: String

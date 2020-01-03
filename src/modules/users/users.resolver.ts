@@ -1,20 +1,20 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { GqlAuthGuard } from '@modules/auth/guards/auth.guard';
-import { RolesGuard } from '@modules/roles/guards/roles.guard';
+import { GqlAuthGuard } from '@modules/auth/guards';
+import { RolesGuard } from '@modules/roles/guards';
 import { Roles } from '@modules/roles/roles.decorator';
 import { constants as rolesConstants } from '@utils/helpers/roles.helper';
 import { UsersService } from './users.service';
-import { CreateUserDTO, UpdateUserDTO, UserRO } from './users.dto';
+import { CreateUserIO, UpdateUserIO, UserRO } from './dto';
 import { User as CurrentUser } from './users.decorator';
-import { User } from './interfaces/user.interface';
+import { User } from './interfaces';
 
 @Resolver(of => UserRO)
 export class UsersResolver {
     constructor(private readonly usersService: UsersService) {}
 
     @Mutation(returns => UserRO)
-    createUser(@Args('data') data: CreateUserDTO): Promise<UserRO> {
+    createUser(@Args('data') data: CreateUserIO): Promise<UserRO> {
         const user: User = { ...data };
         return this.usersService.create(user);
     }
@@ -42,7 +42,7 @@ export class UsersResolver {
     @UseGuards(GqlAuthGuard)
     @Mutation(returns => UserRO)
     async updateCurrentUser(@CurrentUser() currentUser: User,
-                            @Args('data') data: UpdateUserDTO): Promise<UserRO> {
+                            @Args('data') data: UpdateUserIO): Promise<UserRO> {
         return this.usersService.updateUser(currentUser.id, data);
     }
 
@@ -50,7 +50,7 @@ export class UsersResolver {
     @Roles(rolesConstants.ADMIN)
     @Mutation(returns => UserRO)
     updateUser(@Args('id') userId: number,
-               @Args('data') data: UpdateUserDTO): Promise<UserRO> {
+               @Args('data') data: UpdateUserIO): Promise<UserRO> {
         return this.usersService.updateUser(userId, data);
     }
 

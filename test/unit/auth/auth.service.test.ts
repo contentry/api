@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '@modules/users/users.service';
 import { AuthService } from '@modules/auth/auth.service';
 import { User } from '@modules/users/entities';
-import { User as UserInterface } from '@modules/users/interfaces/user.interface';
+import { User as UserInterface } from '@modules/users/interfaces';
 import { PasswordsHelper } from '@utils/helpers/passwords.helper';
 
 describe('AuthService', () => {

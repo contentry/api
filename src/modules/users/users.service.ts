@@ -9,8 +9,8 @@ import { RolesService } from '@modules/roles/roles.service';
 import { constants } from '@utils/helpers/roles.helper';
 import { PasswordsHelper } from '@utils/helpers/passwords.helper';
 import { User } from './entities';
-import { User as UserInterface, UpdateUser as UpdateUserInterface } from './interfaces/user.interface';
-import { UserRO } from './users.dto';
+import { User as UserInterface, UpdateUser as UpdateUserInterface } from './interfaces';
+import { UserRO } from './dto';
 
 @Injectable()
 export class UsersService {
