@@ -14,9 +14,16 @@ jobs:
                 uses: actions/setup-node@v1
                 with:
                     node-version: ${{ matrix.node-version }}
-            -   name: Create DB
+            -   name: Shutdown Ubuntu MySQL (SUDO)
                 run: |
-                    mysql -uroot -proot -e "CREATE DATABASE contentry_test CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
+                    sudo service mysql stop
+            -   name: Set up MySQL
+                uses: mirromutth/mysql-action@v1.1
+                with:
+                    character set server: 'utf8'
+                    collation server: 'utf8_general_ci'
+                    mysql database: 'contentry_test'
+                    mysql root password: 'root'
             -   uses: borales/actions-yarn@v2.0.0
                 with:
                     cmd: install # will run `yarn install` command
