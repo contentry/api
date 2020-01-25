@@ -2,6 +2,8 @@
     "db": {
         "database": "contentry_test",
         "username": "test",
-        "password": "test"
+        "password": "test",
+        "logging": true,
+        "port": 3307
     }
 }
