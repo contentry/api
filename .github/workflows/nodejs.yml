@@ -19,8 +19,8 @@ jobs:
                 with:
                     character set server: 'utf8'
                     collation server: 'utf8_general_ci'
-                    mysql database: 'contentry_test'
-                    mysql root password: ''
+                    mysql user: 'developer'
+                    mysql password: 'test'
             -   name: npm install, lint and test
                 run: |
                     npm ci
