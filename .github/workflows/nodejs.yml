@@ -15,7 +15,8 @@ jobs:
                 with:
                     node-version: ${{ matrix.node-version }}
             -   name: Shutdown Ubuntu MySQL (SUDO)
-                    run: sudo service mysql stop
+                run: |
+                    sudo service mysql stop
             -   name: Set up MySQL
                 uses: mirromutth/mysql-action@v1.1
                 with:
