@@ -1,5 +1,6 @@
 {
     "db": {
+        "host": "mariadb",
         "database": "contentry_test",
         "password": "root",
         "port": 3306
