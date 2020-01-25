@@ -24,11 +24,20 @@ jobs:
                     collation server: 'utf8_general_ci'
                     mysql user: 'developer'
                     mysql password: 'test'
+            -   uses: borales/actions-yarn@v2.0.0
+                with:
+                    cmd: install # will run `yarn install` command
+            -   uses: borales/actions-yarn@v2.0.0
+                with:
+                    cmd: build # will run `yarn build` command
+            -   uses: borales/actions-yarn@v2.0.0
+                with:
+                    cmd: test # will run `yarn test` command
             -   name: npm install, lint and test
                 run: |
-                    npm ci
-                    npm run lint
-                    npm run test
-                    npm run build
+                    yarn install
+                    yarn lint
+                    yarn test
+                    yarn build
                 env:
                     CI: true
