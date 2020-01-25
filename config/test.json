@@ -1,7 +1,6 @@
 {
     "db": {
         "database": "contentry_test",
-        "username": "developer",
         "password": "test"
     }
 }

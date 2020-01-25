@@ -22,8 +22,7 @@ jobs:
                 with:
                     character set server: 'utf8'
                     collation server: 'utf8_general_ci'
-                    mysql user: 'developer'
-                    mysql password: 'test'
+                    mysql root password: 'test'
             -   uses: borales/actions-yarn@v2.0.0
                 with:
                     cmd: install # will run `yarn install` command
